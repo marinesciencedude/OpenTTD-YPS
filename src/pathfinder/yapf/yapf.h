@@ -15,6 +15,7 @@
 #include "../../direction_type.h"
 #include "../../track_type.h"
 #include "../../vehicle_type.h"
+#include "../../vehicle_func.h"
 #include "../pathfinder_type.h"
 
 /**

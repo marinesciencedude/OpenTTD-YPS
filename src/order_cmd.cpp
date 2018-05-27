@@ -129,6 +129,24 @@ void Order::MakeLeaveStation()
 }
 
 /**
+ * Makes this order a Go To Couple order.
+ */
+void Order::MakeGoToCouple()
+{
+	this->type = OT_GOTO_COUPLE;
+	this->flags = 0;
+}
+
+/**
+ * Makes this order a Waiting for Couple order.
+ */
+void Order::MakeWaitCouple()
+{
+	this->type = OT_WAIT_COUPLE;
+	this->flags = 0;
+}
+
+/**
  * Makes this order a Dummy order.
  */
 void Order::MakeDummy()
@@ -889,6 +907,14 @@ CommandCost CmdInsertOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 			}
 			break;
 		}
+		
+		case OT_GOTO_COUPLE: {
+			break;
+		}
+		
+		case OT_WAIT_COUPLE: {
+			break;
+		}
 
 		default: return CMD_ERROR;
 	}
@@ -1309,7 +1335,7 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 	Order *order = v->GetOrder(sel_ord);
 	switch (order->GetType()) {
 		case OT_GOTO_STATION:
-			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD) return CMD_ERROR;
+			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD && mof != MOF_DECOUPLE) return CMD_ERROR;
 			break;
 
 		case OT_GOTO_DEPOT:
@@ -1330,6 +1356,11 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 	switch (mof) {
 		default: NOT_REACHED();
+		
+		case MOF_DECOUPLE:
+			if (v->type != VEH_TRAIN) return CMD_ERROR;
+			if (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) return CMD_ERROR;
+			break;
 
 		case MOF_NON_STOP:
 			if (!v->IsGroundVehicle()) return CMD_ERROR;
@@ -1487,6 +1518,10 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 			case MOF_COND_DESTINATION:
 				order->SetConditionSkipToOrder(data);
+				break;
+				
+			case MOF_DECOUPLE:
+				order->SetDecouple(data);
 				break;
 
 			default: NOT_REACHED();

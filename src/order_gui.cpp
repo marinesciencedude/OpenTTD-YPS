@@ -137,6 +137,8 @@ static const StringID _order_goto_dropdown[] = {
 	STR_ORDER_GO_TO_NEAREST_DEPOT,
 	STR_ORDER_CONDITIONAL,
 	STR_ORDER_SHARE,
+	STR_ORDER_WAIT_FOR_COUPLE,
+	STR_ORDER_GO_TO_COUPLE,
 	INVALID_STRING_ID
 };
 
@@ -340,6 +342,14 @@ void DrawOrderString(const Vehicle *v, const Order *order, int order_index, int 
 			} else {
 				SetDParam(5, STR_EMPTY);
 			}
+			break;
+			
+		case OT_GOTO_COUPLE:
+			SetDParam(0, STR_ORDER_GO_TO_COUPLE);
+			break;
+		
+		case OT_WAIT_COUPLE:
+			SetDParam(0, STR_ORDER_WAIT_FOR_COUPLE);
 			break;
 
 		default: NOT_REACHED();
@@ -751,6 +761,30 @@ private:
 			}
 		}
 	}
+	
+	void OrderClick_Decouple(int i)
+	{
+		VehicleOrderID sel_ord = this->OrderGetSel();
+		const Order *order = this->vehicle->GetOrder(sel_ord);
+		if (i < 0) {
+			i = order->GetDecouple() == 1 ? 0 : 1;
+		}
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_DECOUPLE | (i << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+	}
+	
+	void OrderClick_WaitForCouple()
+	{
+		Order order;
+		order.MakeWaitCouple();
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), order.Pack(), CMD_INSERT_ORDER | CMD_MSG(STR_ERROR_CAN_T_INSERT_NEW_ORDER));
+	}
+	
+	void OrderClick_Couple()
+	{
+		Order order;
+		order.MakeGoToCouple();
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), order.Pack(), CMD_INSERT_ORDER | CMD_MSG(STR_ERROR_CAN_T_INSERT_NEW_ORDER));
+	}
 
 	/** Cache auto-refittability of the vehicle chain. */
 	void UpdateAutoRefitState()
@@ -941,6 +975,8 @@ public:
 		this->RaiseWidget(WID_O_FULL_LOAD);
 		this->RaiseWidget(WID_O_UNLOAD);
 		this->RaiseWidget(WID_O_SERVICE);
+		
+		this->RaiseWidget(WID_O_DECOUPLE);
 
 		/* Selection widgets. */
 		/* Train or road vehicle. */
@@ -967,9 +1003,11 @@ public:
 			this->DisableWidget(WID_O_FULL_LOAD);
 			this->DisableWidget(WID_O_UNLOAD);
 			this->DisableWidget(WID_O_REFIT_DROPDOWN);
+			this->DisableWidget(WID_O_DECOUPLE);
 		} else {
 			this->SetWidgetDisabledState(WID_O_FULL_LOAD, (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) != 0); // full load
 			this->SetWidgetDisabledState(WID_O_UNLOAD,    (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) != 0); // unload
+			this->SetWidgetDisabledState(WID_O_DECOUPLE,  (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) != 0); // decouple
 
 			switch (order->GetType()) {
 				case OT_GOTO_STATION:
@@ -985,6 +1023,7 @@ public:
 					}
 					this->SetWidgetLoweredState(WID_O_FULL_LOAD, order->GetLoadType() == OLF_FULL_LOAD_ANY);
 					this->SetWidgetLoweredState(WID_O_UNLOAD, order->GetUnloadType() == OUFB_UNLOAD);
+					this->SetWidgetLoweredState(WID_O_DECOUPLE, order->GetDecouple() == 1);
 
 					/* Can only do refitting when stopping at the destination and loading cargo.
 					 * Also enable the button if a refit is already set to allow clearing it. */
@@ -1008,6 +1047,7 @@ public:
 					this->DisableWidget(WID_O_FULL_LOAD);
 					this->DisableWidget(WID_O_UNLOAD);
 					this->DisableWidget(WID_O_REFIT_DROPDOWN);
+					this->DisableWidget(WID_O_DECOUPLE);
 					break;
 
 				case OT_GOTO_DEPOT:
@@ -1057,6 +1097,7 @@ public:
 					this->DisableWidget(WID_O_FULL_LOAD);
 					this->DisableWidget(WID_O_UNLOAD);
 					this->DisableWidget(WID_O_REFIT_DROPDOWN);
+					this->DisableWidget(WID_O_DECOUPLE);
 					break;
 			}
 		}
@@ -1318,6 +1359,9 @@ public:
 			case WID_O_SHARED_ORDER_LIST:
 				ShowVehicleListWindow(this->vehicle);
 				break;
+			case WID_O_DECOUPLE:
+				OrderClick_Decouple(-1);
+				break;
 		}
 	}
 
@@ -1365,6 +1409,8 @@ public:
 					case 1: this->OrderClick_NearestDepot(); break;
 					case 2: this->OrderClick_Goto(OPOS_CONDITIONAL); break;
 					case 3: this->OrderClick_Goto(OPOS_SHARE); break;
+					case 4: this->OrderClick_WaitForCouple(); break;
+					case 5: this->OrderClick_Couple(); break;
 					default: NOT_REACHED();
 				}
 				break;
@@ -1586,6 +1632,8 @@ static const NWidgetPart _nested_orders_train_widgets[] = {
 		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE),
 			NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_SKIP), SetMinimalSize(124, 12), SetFill(1, 0),
 													SetDataTip(STR_ORDERS_SKIP_BUTTON, STR_ORDERS_SKIP_TOOLTIP), SetResize(1, 0),
+			NWidget(WWT_TEXTBTN, COLOUR_GREY, WID_O_DECOUPLE), SetMinimalSize(124, 12), SetFill(1, 0),
+													SetDataTip(STR_ORDERS_DECOUPLE_BUTTON, STR_ORDERS_DECOUPLE_TOOLTIP), SetResize(1, 0),
 			NWidget(NWID_SELECTION, INVALID_COLOUR, WID_O_SEL_BOTTOM_MIDDLE),
 				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_DELETE), SetMinimalSize(124, 12), SetFill(1, 0),
 														SetDataTip(STR_ORDERS_DELETE_BUTTON, STR_ORDERS_DELETE_TOOLTIP), SetResize(1, 0),
