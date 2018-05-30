@@ -380,7 +380,7 @@ void AfterLoadVehicles(bool part_of_load)
 		switch (v->type) {
 			case VEH_TRAIN: {
 				Train *t = Train::From(v);
-				if (t->IsFrontEngine() || t->IsFreeWagon()) {
+				if (t->IsFrontEngine() || t->IsFreeWagon() || t->IsFrontWagon()) {
 					t->gcache.last_speed = t->cur_speed; // update displayed train speed
 					t->ConsistChanged(CCF_SAVELOAD);
 				}
@@ -644,6 +644,7 @@ const SaveLoad *GetVehicleDescription(VehicleType vt)
 		 SLE_CONDVAR(Vehicle, current_order.type,    SLE_UINT8,                    5, SL_MAX_VERSION),
 		 SLE_CONDVAR(Vehicle, current_order.flags,   SLE_UINT8,                    5, SL_MAX_VERSION),
 		 SLE_CONDVAR(Vehicle, current_order.dest,    SLE_UINT16,                   5, SL_MAX_VERSION),
+		 SLE_CONDVAR(Vehicle, current_order.decouple_flags,SLE_UINT8,            199, SL_MAX_VERSION),
 
 		/* Refit in current order */
 		 SLE_CONDVAR(Vehicle, current_order.refit_cargo,   SLE_UINT8,             36, SL_MAX_VERSION),
