@@ -297,9 +297,10 @@ static PBSTileInfo FollowReservation(Owner o, RailTypes rts, TileIndex tile, Tra
 struct FindTrainOnTrackInfo {
 	PBSTileInfo res; ///< Information about the track.
 	Train *best;     ///< The currently "best" vehicle we have found.
+	const Train *self;     ///< We are not looking for our train
 
 	/** Init the best location to NULL always! */
-	FindTrainOnTrackInfo() : best(NULL) {}
+	FindTrainOnTrackInfo() : best(NULL), self(NULL) {}
 };
 
 /** Callback for Has/FindVehicleOnPos to find a train on a specific track. */
@@ -312,6 +313,8 @@ static Vehicle *FindTrainOnTrackEnum(Vehicle *v, void *data)
 	Train *t = Train::From(v);
 	if (t->track == TRACK_BIT_WORMHOLE || HasBit((TrackBits)t->track, TrackdirToTrack(info->res.trackdir))) {
 		t = t->First();
+		/* We are not looking for ourself */
+		if (info->self != NULL && t->index == info->self->index) return NULL;
 
 		/* ALWAYS return the lowest ID (anti-desync!) */
 		if (info->best == NULL || t->index < info->best->index) info->best = t;
@@ -340,6 +343,7 @@ PBSTileInfo FollowTrainReservation(const Train *v, Vehicle **train_on_res)
 	FindTrainOnTrackInfo ftoti;
 	ftoti.res = FollowReservation(v->owner, GetRailTypeInfo(v->railtype)->compatible_railtypes, tile, trackdir);
 	ftoti.res.okay = IsSafeWaitingPosition(v, ftoti.res.tile, ftoti.res.trackdir, true, _settings_game.pf.forbid_90_deg);
+	ftoti.self = v;
 	if (train_on_res != NULL) {
 		FindVehicleOnPos(ftoti.res.tile, &ftoti, FindTrainOnTrackEnum);
 		if (ftoti.best != NULL) *train_on_res = ftoti.best->First();
