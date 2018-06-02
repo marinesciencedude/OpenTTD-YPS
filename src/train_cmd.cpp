@@ -2083,18 +2083,20 @@ static bool CanTrainFitStation(Train *v)
 	return v->gcache.cached_total_length <= station_length;
 }
 
+static bool CanDecouple(Train *v)
+{
+	if (!CanTrainFitStation(v)) return false; 
+	if (CountVehiclesInChain(v) < 2) return false;
+	//if (v->Next()->IsArticulatedPart()) return false;
+	if (v->Last()->IsRearDualheaded()) return false;
+	return true;
+}
+
 static Train *DecoupleTrain(Train *v)
 {
-	
-	//InvalidateWindowClassesData(WC_TRAINS_LIST, 0);
-	//assert(false);
-	if (!CanTrainFitStation(v)) return v; 
-	if (CountVehiclesInChain(v) < 2) return v;
-	if (v->Next()->IsArticulatedPart()) return v;
-	if (v->Last()->IsRearDualheaded()) return v;
+	if (!CanDecouple(v)) return v; 
 	Train *first_param = NULL;
 	Train *u = v->GetNextUnit();
-	
 	
 	//ArrangeTrains(Train **dst_head, Train *dst, Train **src_head, Train *src, bool move_chain);	
 	ArrangeTrains(&first_param, NULL, &v, u, true);
@@ -2109,11 +2111,6 @@ static Train *DecoupleTrain(Train *v)
 	
 	GroupStatistics::CountVehicle(v, 1);
 	GroupStatistics::CountVehicle(u, 1);
-	
-	
-	//UpdateTrainGroupID(u);
-	//assert(false);
-
 	
 	NormaliseTrainHead(u);
 	NormaliseTrainHead(v);
@@ -2133,7 +2130,6 @@ static Train *DecoupleTrain(Train *v)
 	InvalidateWindowClassesData(WC_TRAINS_LIST, 0);
 	return u;
 	//u->orders.list->InsertOrderAt(copy, 0);
-	//u->SetFrontEngine();
 	//assert(false);
 }
 
@@ -3955,24 +3951,27 @@ static void Couple(Train *v, Train *u, bool train_u_reversed)
 		AdvanceWagonsAfterReverse(u);
 		u->SetFrontWagon();
 	}
+	
+	ReverseTrainDirection(v);
 	 
 	Train *u_head = u;
-	ArrangeTrains(&v, v, &u_head, u, true);
+	Train *v_last = v->Last();
+	ArrangeTrains(&v, v_last, &u_head, u, true);
 	
 	u->ClearFrontWagon();
+	u->ClearFrontEngine();
 	
-	v->direction = ReverseDir(v->direction);
+	//v->direction = ReverseDir(v->direction);
 	NormaliseTrainHead(v);
 	v->IncrementImplicitOrderIndex();
-	AdvanceWagonsAfterCouple(v);
+	AdvanceWagonsAfterCouple(v_last);
 	InvalidateWindowClassesData(WC_TRAINS_LIST, 0);
 }
 
 static Train *GetCouplePosition(Train *v, bool &reverse)
 {
-
-	if (CountVehiclesInChain(v) != 1) return NULL;
-	// TO DO real Find train
+	//if (CountVehiclesInChain(v) != 1) return NULL;
+	
 	Vehicle *other_vehicle = NULL;
 	FollowTrainReservation(v, &other_vehicle);
 	
@@ -4004,8 +4003,6 @@ static Train *GetCouplePosition(Train *v, bool &reverse)
 		reverse = true;
 		return u;
 	}
-	
-	//Compute couple positions
 	return NULL;
 }
 
