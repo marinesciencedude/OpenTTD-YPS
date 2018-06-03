@@ -1531,6 +1531,7 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 				break;
 				
 			case MOF_DECOUPLE_VALUE:
+				order->SetDecouple(1);
 				order->SetNumDecouple(data);
 				break;
 
