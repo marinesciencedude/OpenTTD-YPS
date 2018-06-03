@@ -3966,7 +3966,8 @@ static void Couple(Train *v, Train *u, bool train_u_reversed)
 		AdvanceWagonsAfterReverse(u);
 		u->SetFrontWagon();
 	}
-	
+	v->IncrementImplicitOrderIndex();
+	ProcessOrders(v);
 	ReverseTrainDirection(v);
 	 
 	Train *u_head = u;
@@ -3978,7 +3979,7 @@ static void Couple(Train *v, Train *u, bool train_u_reversed)
 	
 	//v->direction = ReverseDir(v->direction);
 	NormaliseTrainHead(v);
-	v->IncrementImplicitOrderIndex();
+	
 	AdvanceWagonsAfterCouple(v_last);
 	InvalidateWindowClassesData(WC_TRAINS_LIST, 0);
 }
