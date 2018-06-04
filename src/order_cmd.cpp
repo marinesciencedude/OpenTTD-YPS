@@ -1337,7 +1337,7 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 	Order *order = v->GetOrder(sel_ord);
 	switch (order->GetType()) {
 		case OT_GOTO_STATION:
-			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD && mof != MOF_DECOUPLE && mof!= MOF_DECOUPLE_VALUE) return CMD_ERROR;
+			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD && mof != MOF_DECOUPLE && mof != MOF_DECOUPLE_VALUE) return CMD_ERROR;
 			break;
 
 		case OT_GOTO_DEPOT:
@@ -1350,6 +1350,10 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 		case OT_CONDITIONAL:
 			if (mof != MOF_COND_VARIABLE && mof != MOF_COND_COMPARATOR && mof != MOF_COND_VALUE && mof != MOF_COND_DESTINATION) return CMD_ERROR;
+			break;
+			
+		case OT_GOTO_COUPLE:
+			if (mof != MOF_COUPLE_LOAD) return CMD_ERROR;
 			break;
 
 		default:
@@ -1435,6 +1439,10 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 		case MOF_COND_DESTINATION:
 			if (data >= v->GetNumOrders()) return CMD_ERROR;
+			break;
+			
+		case MOF_COUPLE_LOAD:
+			if (data >= ODC_END) return CMD_ERROR;
 			break;
 	}
 
@@ -1531,8 +1539,12 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 				break;
 				
 			case MOF_DECOUPLE_VALUE:
-				order->SetDecouple(1);
+				order->SetDecouple(ODF_DECOUPLE);
 				order->SetNumDecouple(data);
+				break;
+				
+			case MOF_COUPLE_LOAD:
+				order->SetCoupleLoad((OrderCoupleFlags)data);
 				break;
 
 			default: NOT_REACHED();
@@ -1559,6 +1571,9 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 				if (u->current_order.IsType(OT_GOTO_STATION)) {
 					u->current_order.SetDecouple(order->GetDecouple());
 					u->current_order.SetNumDecouple(order->GetNumDecouple());
+				}
+				if (u->current_order.IsType(OT_GOTO_COUPLE)) {
+					u->current_order.SetCoupleLoad(order->GetCoupleLoad());
 				}
 			}
 			InvalidateVehicleOrder(u, VIWD_MODIFY_ORDERS);
