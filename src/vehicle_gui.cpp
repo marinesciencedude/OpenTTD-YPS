@@ -218,7 +218,6 @@ static void DrawVehicleProfitButton(const Vehicle *v, int x, int y)
 static void DrawVehicleCargoTypeWindow(CargoID sel, uint pos, uint rows, uint delta, const Rect &r)
 {
 	uint y = r.top + WD_MATRIX_TOP;
-	uint current = 0;
 
 	int textleft   = r.left  + WD_MATRIX_LEFT;
 	int textright  = r.right - WD_MATRIX_RIGHT;
@@ -300,8 +299,17 @@ struct CargoTypesWindow : public Window {
 	
 	void SetSelection(uint click_row)
 	{
-		this->sel = click_row;
-		DEBUG(misc, 0, "sel %d", click_row);
+		uint row = 0;
+
+		CargoSpec *cs;
+		FOR_ALL_CARGOSPECS(cs) {
+			if (row == click_row) {
+				this->sel = click_row;
+				return;
+			}
+			row++;
+		}
+		this->sel = CT_COUPLE_ANY_CARGO;
 	}
 	
 	virtual void OnResize()

@@ -1150,8 +1150,7 @@ static void NormaliseTrainHead(Train *head)
 	UpdateTrainGroupID(head);
 
 	/* Not a front engine, i.e. a free wagon chain. No need to do more. */
-	//if (!head->IsPrimaryVehicle()) return;
-	if (!head->IsFrontEngine()) return;
+	if (!head->IsPrimaryVehicle()) return;
 
 	/* Update the refit button and window */
 	InvalidateWindowData(WC_VEHICLE_REFIT, head->index, VIWD_CONSIST_CHANGED);
@@ -1159,7 +1158,7 @@ static void NormaliseTrainHead(Train *head)
 
 	/* If we don't have a unit number yet, set one. */
 	if (head->unitnumber != 0) return;
-	head->unitnumber = GetFreeUnitNumber(VEH_TRAIN);
+	head->unitnumber = GetFreeUnitNumber(VEH_TRAIN, head->owner);
 }
 
 /**
@@ -2088,7 +2087,6 @@ static bool CanDecouple(Train *v)
 	if (!CanTrainFitStation(v)) return false; 
 	if (CountVehiclesInChain(v) < 2) return false;
 	if (v->GetNextUnit() == NULL) return false;
-	//if (v->Next()->IsArticulatedPart()) return false;
 	if (v->Last()->IsRearDualheaded()) return false;
 	return true;
 }
@@ -2122,15 +2120,14 @@ static Train *DecoupleTrain(Train *v)
 	GroupStatistics::CountVehicle(v, 1);
 	GroupStatistics::CountVehicle(u, 1);
 	
+	
 	NormaliseTrainHead(u);
 	NormaliseTrainHead(v);
-	u->unitnumber = GetFreeUnitNumber(VEH_TRAIN, u->owner);
+	
 	if (u->orders.list == NULL && !OrderList::CanAllocateItem()) return u;
 	if (Order::CanAllocateItem(2)) {
 		Order *copy = new Order();
-	//assert(false);
 		copy->AssignOrder(v->current_order);
-	//assert(false);
 		InsertOrder(u, copy, 0);
 		Order *wait_for_couple = new Order();
 		wait_for_couple->MakeWaitCouple();
@@ -2138,9 +2135,8 @@ static Train *DecoupleTrain(Train *v)
 		//Order *wait_order = new Order();
 	}
 	InvalidateWindowClassesData(WC_TRAINS_LIST, 0);
-	return u;
-	//u->orders.list->InsertOrderAt(copy, 0);
 	//assert(false);
+	return u;
 }
 
 /**
@@ -3959,12 +3955,13 @@ static void Couple(Train *v, Train *u, bool train_u_reversed)
 	GroupStatistics::CountVehicle(u, -1);
 	
 	if (train_u_reversed) {
-		u->ClearFrontWagon();
+		/*u->ClearFrontWagon();
 		AdvanceWagonsBeforeReverse(u);
 		u = ReverseTrainChain(u);
 		ReverseTrainChainDir(u);
 		AdvanceWagonsAfterReverse(u);
-		u->SetFrontWagon();
+		u->SetFrontWagon();*/
+		ReverseTrainDirection(u);
 	}
 	v->IncrementImplicitOrderIndex();
 	ProcessOrders(v);
