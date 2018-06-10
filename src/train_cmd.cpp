@@ -2083,7 +2083,7 @@ CommandCost CmdForceTrainProceed(TileIndex tile, DoCommandFlag flags, uint32 p1,
 	return CommandCost();
 }
 
-bool TrainFitStation(Train *v)
+bool TrainFitStation(const Train *v)
 {
 	if (!IsRailStationTile(v->tile)) return false;
 	if (!IsRailStationTile(v->Last()->tile)) return false;
@@ -2091,8 +2091,9 @@ bool TrainFitStation(Train *v)
 	const Station *st = Station::Get(sid);
 	//int station_length = st->GetPlatformLength(v->tile) * TILE_SIZE;
 	int station_length = st->GetPlatformLength(v->tile, DirToDiagDir(ReverseDir(v->direction))) * TILE_SIZE;
-
-	return v->gcache.cached_total_length <= station_length;
+	/* vehicle position is in the middle, 
+	 * half vehicle size overlap is fine and solve corner case */
+	return v->gcache.cached_total_length - (v->gcache.cached_veh_length + 1) / 2 - v->Last()->gcache.cached_veh_length / 2 <= station_length;
 }
 
 static bool CanDecouple(Train *v)
@@ -4029,6 +4030,7 @@ static Train *GetCouplePosition(Train *v, bool &reverse)
 	if (other_vehicle->First()->index == v->index) return NULL;
 	if (!other_vehicle->current_order.IsType(OT_WAIT_COUPLE)) return NULL;
 	Train *u = Train::From(other_vehicle)->First();
+	if (!TrainFitStation(u)) return NULL;
 	
 	DirDiff dir_diff = DirDifference(v->direction, u->direction);
 	reverse = dir_diff == DIRDIFF_SAME || dir_diff == DIRDIFF_45RIGHT || dir_diff == DIRDIFF_45LEFT;
