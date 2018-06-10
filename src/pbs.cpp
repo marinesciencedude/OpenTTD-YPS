@@ -81,7 +81,7 @@ static Vehicle *FindOtherTrainOnTrackEnum(Vehicle *v, void *data)
 	FindOtherTrainOnTrackInfo *foti = (FindOtherTrainOnTrackInfo *) data;
 	const Train *u = foti->other;
 
-	if (v->type != VEH_TRAIN) return NULL;
+	if (v->type != VEH_TRAIN || (v->vehstatus & VS_CRASHED)) return NULL;
 
 	Train *t = Train::From(v);
 	if (t->First()->index != u->First()->index) {
