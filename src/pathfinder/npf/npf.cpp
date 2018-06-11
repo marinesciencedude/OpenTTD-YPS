@@ -548,6 +548,11 @@ static int32 NPFFindSafeTile(AyStar *as, OpenListNode *current)
 				AYSTAR_FOUND_END_NODE : AYSTAR_DONE;
 }
 
+static int32 NPFFindCoupleTrain(AyStar *as, OpenListNode *current)
+{
+	return AYSTAR_DONE;
+}
+
 /* Will find a station identified using the NPFFindStationOrTileData */
 static int32 NPFFindStationOrTile(AyStar *as, OpenListNode *current)
 {
@@ -1257,7 +1262,22 @@ bool NPFTrainCheckReverse(const Train *v)
 
 bool NPFTrainCoupleTrack(const Train *v, bool do_track_reservation)
 {
-	return false;
+	assert(v->type == VEH_TRAIN);
+	
+	NPFFindStationOrTileData fstd;
+	fstd.v = v;
+	fstd.reserve_path = do_track_reservation;
+
+	AyStarNode start1;
+	start1.tile = v->tile;
+	start1.direction = v->GetVehicleTrackdir();
+
+	RailTypes railtypes = v->compatible_railtypes;
+
+	/* perform a breadth first search. Target is NULL,
+	 * since we are just looking for a train...*/
+	AyStarUserData user = { v->owner, TRANSPORT_RAIL, railtypes, ROADTYPES_NONE };
+	return NPFRouteInternal(&start1, true, NULL, false, &fstd, NPFFindCoupleTrain, NPFCalcZero, &user, 0, true).res_okay;
 }
 
 Track NPFTrainChooseTrack(const Train *v, TileIndex tile, DiagDirection enterdir, TrackBits tracks, bool &path_found, bool reserve_track, struct PBSTileInfo *target)
