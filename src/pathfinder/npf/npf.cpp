@@ -550,6 +550,18 @@ static int32 NPFFindSafeTile(AyStar *as, OpenListNode *current)
 
 static int32 NPFFindCoupleTrain(AyStar *as, OpenListNode *current)
 {
+	AyStarNode *node = &current->path.node;
+	TileIndex tile = node->tile;
+	Trackdir td = node->direction;
+	
+	TrackdirBits tdb = TrackdirToTrackdirBits(td);
+	if (!HasReservedTracks(tile, TrackdirBitsToTrackBits(tdb)) || !IsRailStationTile(tile)) return AYSTAR_DONE;
+	Train *t = GetTrainForReservation(tile, TrackdirToTrack(td));
+	if (t == NULL) return AYSTAR_DONE;
+	if (t->current_order.IsType(OT_WAIT_COUPLE)) {
+		//if (TrainFitStation(t) && CheckOrderLoad(t) && CheckOrderCargoType(t)) return AYSTAR_FOUND_END_NODE;
+		return AYSTAR_FOUND_END_NODE;
+	}
 	return AYSTAR_DONE;
 }
 
