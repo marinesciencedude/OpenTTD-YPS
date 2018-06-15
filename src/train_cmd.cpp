@@ -2092,19 +2092,22 @@ static bool CanDecouple(Train *v)
 	if (CountVehiclesInChain(v) < 2) return false;
 	if (v->GetNextUnit() == NULL) return false;
 	if (!TrainCheckIfLineContinuesAfterStation(v)) return false;
-	for (Train *z = v; z != NULL; z = z->Next()) {
-		if (z->IsRearDualheaded()) return false;
-	}
-	//if (v->Last()->IsRearDualheaded()) return false;
 	return true;
 }
 
 static Train *GetDecoupleVehicle(Train *v)
 {
-	Train *ret = v->GetNextUnit();
-	for (int i = 1; i < v->current_order.GetNumDecouple() && ret->GetNextUnit() != NULL; i++) {
-		ret = ret->GetNextUnit();
+	Train *ret = v->GetNextVehicle();
+	bool multihead_front = v->IsMultiheaded();
+	for (int i = 1; i < v->current_order.GetNumDecouple() && ret->GetNextVehicle() != NULL; i++) {
+		if (multihead_front) {
+			if (ret->IsRearDualheaded()) multihead_front = false;
+		} else {
+			if (ret->IsMultiheaded()) multihead_front = true;
+		}
+		ret = ret->GetNextVehicle();
 	}
+	if (multihead_front) return NULL;
 	return ret;
 }
 
@@ -2144,6 +2147,7 @@ static Train *DecoupleTrain(Train *v)
 	if (!CanDecouple(v)) return v;
 	
 	Train *u = GetDecoupleVehicle(v);
+	if (u == NULL) return v;
 	
 	if (!TryTrainDecouple(v, u)) return v;
 	
