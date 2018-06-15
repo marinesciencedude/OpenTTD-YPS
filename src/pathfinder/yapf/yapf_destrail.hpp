@@ -256,6 +256,11 @@ public:
 		}
 		return false;
 	}
+	
+	bool CheckNumberOfWagons(Train *t)
+	{
+		return true;
+	}
 
 	/** Called by YAPF to detect if node ends in the desired destination */
 	inline bool PfDetectDestination(TileIndex tile, Trackdir td)
@@ -266,7 +271,7 @@ public:
 		Train *t = GetTrainForReservation(tile, TrackdirToTrack(td));
 		if (t == NULL) return false;
 		if (t->current_order.IsType(OT_WAIT_COUPLE)) {
-			if (TrainFitStation(t) && CheckOrderLoad(t) && CheckOrderCargoType(t)) return true;
+			if (TrainFitStation(t) && CheckOrderLoad(t) && CheckOrderCargoType(t) && CheckNumberOfWagons(t)) return true;
 		}
 		return false;
 	}
