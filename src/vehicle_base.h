@@ -950,6 +950,17 @@ public:
 	}
 
 	/**
+	 * Get the last part of an articulated engine.
+	 * @return Last part of the engine.
+	 */
+	inline const Vehicle *GetLastEnginePart() const
+	{
+		const Vehicle *v = this;
+		while (v->HasArticulatedPart()) v = v->GetNextArticulatedPart();
+		return v;
+	}
+
+	/**
 	 * Get the next real (non-articulated part) vehicle in the consist.
 	 * @return Next vehicle in the consist.
 	 */
@@ -1067,6 +1078,12 @@ struct SpecializedVehicle : public Vehicle {
 	 * @return Last part of the engine.
 	 */
 	inline T *GetLastEnginePart() { return (T *)this->Vehicle::GetLastEnginePart(); }
+	
+	/**
+	 * Get the last part of an articulated engine.
+	 * @return Last part of the engine.
+	 */
+	inline const T *GetLastEnginePart() const { return (const T *)this->Vehicle::GetLastEnginePart(); }
 
 	/**
 	 * Get the next real (non-articulated part) vehicle in the consist.
