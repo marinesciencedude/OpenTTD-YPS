@@ -114,16 +114,18 @@ static const StringID _order_non_stop_drowdown[] = {
 	INVALID_STRING_ID
 };
 
-static const StringID _order_decouple_drowdown[] = {
-	STR_ORDERS_DECOUPLE_DROP,
-	STR_ORDERS_DECOUPLE_VALUE,
-	INVALID_STRING_ID
-};
-
 static const StringID _order_couple_load_drowdown[] = {
 	STR_ORDERS_COUPLE_LOAD_ANY,
 	STR_ORDERS_COUPLE_LOAD_EMPTY,
 	STR_ORDERS_COUPLE_LOAD_FULL,
+	INVALID_STRING_ID
+};
+
+static const StringID _order_decouple_orders_drowdown[] = {
+	STR_ORDERS_DECOUPLE_KEEP_ORDERS,
+	STR_ORDERS_DECOUPLE_KEEP_ORDERS_NO_LOAD,
+	STR_ORDERS_DECOUPLE_INHERIT_ORDERS,
+	STR_ORDERS_DECOUPLE_WAIT_FOR_COUPLE,
 	INVALID_STRING_ID
 };
 
@@ -300,8 +302,6 @@ void DrawOrderString(const Vehicle *v, const Order *order, int order_index, int 
 				}
 				if (order->GetDecouple()) {
 					SetDParam(5, STR_ORDER_DECOUPLE);
-					uint num_d = order->GetNumDecouple();
-					SetDParam(6, num_d == 0 ? 1 : num_d);
 				}
 				if (v->type == VEH_TRAIN && (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) == 0) {
 					SetDParam(8, order->GetStopLocation() + STR_ORDER_STOP_LOCATION_NEAR_END);
@@ -388,9 +388,14 @@ void DrawOrderString(const Vehicle *v, const Order *order, int order_index, int 
 			SetDParam(0, STR_ORDER_WAIT_FOR_COUPLE);
 			break;
 			
-		case OT_DECOUPLE:
-			SetDParam(0, STR_EMPTY);
+		case OT_DECOUPLE: {
+			SetDParam(0, STR_ORDER_DECOUPLE_DETAILS);
+			uint num_d = order->GetNumDecouple();
+			SetDParam(1, num_d == 0 ? 1 : num_d);
+			SetDParam(2, STR_ORDER_DECOUPLE_KEEP_ORDERS + order->GetDecoupleFirstOrdersType());
+			SetDParam(3, STR_ORDER_DECOUPLE_KEEP_ORDERS + order->GetDecoupleSecondOrdersType());
 			break;
+		}
 
 		default: NOT_REACHED();
 	}
@@ -536,6 +541,7 @@ private:
 		DP_GROUNDVEHICLE_ROW_NORMAL      = 0, ///< Display the row for normal/depot orders in the top row of the train/rv order window.
 		DP_GROUNDVEHICLE_ROW_CONDITIONAL = 1, ///< Display the row for conditional orders in the top row of the train/rv order window.
 		DP_GROUNDVEHICLE_ROW_COUPLE      = 2, ///< Display the row for couple orders in the top row of the train order window.
+		DP_GROUNDVEHICLE_ROW_DECOUPLE    = 3, ///< Display the row for decouple options of decouple flagged order of the train order window.
 
 		/* WID_O_SEL_TOP_LEFT */
 		DP_LEFT_LOAD       = 0, ///< Display 'load' in the left button of the top row of the train/rv order window.
@@ -630,7 +636,7 @@ private:
 		if (load_type < 0) {
 			load_type = order->GetLoadType() == OLF_LOAD_IF_POSSIBLE ? OLF_FULL_LOAD_ANY : OLF_LOAD_IF_POSSIBLE;
 		}
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_LOAD | (load_type << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_LOAD | (load_type << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 
 	/**
@@ -653,7 +659,7 @@ private:
 			if (order == NULL) return;
 			i = (order->GetDepotOrderType() & ODTFB_SERVICE) ? DA_ALWAYS_GO : DA_SERVICE;
 		}
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_DEPOT_ACTION | (i << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_DEPOT_ACTION | (i << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 
 	/**
@@ -685,11 +691,11 @@ private:
 			unload_type = order->GetUnloadType() == OUF_UNLOAD_IF_POSSIBLE ? OUFB_UNLOAD : OUF_UNLOAD_IF_POSSIBLE;
 		}
 
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_UNLOAD | (unload_type << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_UNLOAD | (unload_type << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 
 		/* Transfer orders with leave empty as default */
 		if (unload_type == OUFB_TRANSFER) {
-			DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_LOAD | (OLFB_NO_LOAD << 4), CMD_MODIFY_ORDER);
+			DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_LOAD | (OLFB_NO_LOAD << 8), CMD_MODIFY_ORDER);
 			this->SetWidgetDirty(WID_O_FULL_LOAD);
 		}
 	}
@@ -729,7 +735,7 @@ private:
 		}
 
 		this->SetWidgetDirty(WID_O_NON_STOP);
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_NON_STOP | non_stop << 4,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_NON_STOP | non_stop << 8,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 
 	/**
@@ -738,11 +744,19 @@ private:
 	 */
 	void OrderClick_Skip()
 	{
+		VehicleOrderID sel_ord = this->OrderGetSel();
+		if (_ctrl_pressed) {
+			const Order *order = this->vehicle->GetOrder(sel_ord);
+			if (order->GetType() == OT_DECOUPLE) {
+				sel_ord--;
+			}
+		}
+
 		/* Don't skip when there's nothing to skip */
-		if (_ctrl_pressed && this->vehicle->cur_implicit_order_index == this->OrderGetSel()) return;
+		if (_ctrl_pressed && this->vehicle->cur_implicit_order_index == sel_ord) return;
 		if (this->vehicle->GetNumOrders() <= 1) return;
 
-		DoCommandP(this->vehicle->tile, this->vehicle->index, _ctrl_pressed ? this->OrderGetSel() : ((this->vehicle->cur_implicit_order_index + 1) % this->vehicle->GetNumOrders()),
+		DoCommandP(this->vehicle->tile, this->vehicle->index, _ctrl_pressed ? sel_ord : ((this->vehicle->cur_implicit_order_index + 1) % this->vehicle->GetNumOrders()),
 				CMD_SKIP_TO_ORDER | CMD_MSG(_ctrl_pressed ? STR_ERROR_CAN_T_SKIP_TO_ORDER : STR_ERROR_CAN_T_SKIP_ORDER));
 	}
 
@@ -804,14 +818,12 @@ private:
 		}
 	}
 	
-	void OrderClick_Decouple(int i)
+	void OrderClick_Decouple()
 	{
 		VehicleOrderID sel_ord = this->OrderGetSel();
 		const Order *order = this->vehicle->GetOrder(sel_ord);
-		if (i < 0) {
-			i = order->GetDecouple() == ODF_DECOUPLE ? ODF_NOTHING : ODF_DECOUPLE;
-		}
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_DECOUPLE | (i << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		int i = order->GetDecouple() == ODF_DECOUPLE ? ODF_NOTHING : ODF_DECOUPLE;
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_DECOUPLE | (i << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 	
 	void OrderClick_WaitForCouple()
@@ -835,7 +847,7 @@ private:
 		if (load_type < 0) {
 			load_type = order->GetCoupleLoad() == ODC_IS_EMPTY ? ODC_ANY : ODC_IS_EMPTY;
 		}
-		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_COUPLE_LOAD | (load_type << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_COUPLE_LOAD | (load_type << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 	
 	void OrderClick_CoupleCargo()
@@ -843,10 +855,20 @@ private:
 		VehicleOrderID sel_ord = this->OrderGetSel();
 		const Order *order = this->vehicle->GetOrder(sel_ord);
 		if (order->HasCoupleCargoType()) {
-			DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_COUPLE_CARGO | (CT_COUPLE_ANY_CARGO << 4), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+			DoCommandP(this->vehicle->tile, this->vehicle->index + (sel_ord << 20), MOF_COUPLE_CARGO | (CT_COUPLE_ANY_CARGO << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 		} else {
 			ShowVehicleCargoTypesWindow(this->vehicle, this->OrderGetSel(), this);
 		}
+	}
+
+	void OrderClick_OrdersFirst(int orders_type)
+	{
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_FIRST_ORDERS | (orders_type << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+	}
+	
+	void OrderClick_OrdersSecond(int orders_type)
+	{
+		DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_SECOND_ORDERS | (orders_type << 8), CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 	}
 
 	/** Cache auto-refittability of the vehicle chain. */
@@ -1157,12 +1179,18 @@ public:
 					assert(this->vehicle->type == VEH_TRAIN);
 					train_row_sel->SetDisplayedPlane(DP_GROUNDVEHICLE_ROW_COUPLE);
 					//left_sel->SetDisplayedPlane(DP_LEFT_COUPLE_LOAD);
-					//this->RaiseWidget(WID_O_COUPLE_LOAD);
 					this->SetWidgetLoweredState(WID_O_COUPLE_LOAD, order->GetCoupleLoad() == ODC_IS_EMPTY);
 					this->SetWidgetLoweredState(WID_O_COUPLE_CARGO, order->HasCoupleCargoType());
-					//this->DisableWidget(WID_O_COND_COMPARATOR);
 					this->DisableWidget(WID_O_COND_VALUE);
 					this->DisableWidget(WID_O_DECOUPLE);
+					break;
+				}
+
+				case OT_DECOUPLE: {
+					assert(this->vehicle->type == VEH_TRAIN);
+					train_row_sel->SetDisplayedPlane(DP_GROUNDVEHICLE_ROW_DECOUPLE);
+					this->DisableWidget(WID_O_DECOUPLE);
+					this->DisableWidget(WID_O_DELETE);
 					break;
 				}
 
@@ -1315,7 +1343,7 @@ public:
 				} else if (sel == this->selected_order) {
 					if (this->vehicle->type == VEH_TRAIN && sel < this->vehicle->GetNumOrders()) {
 						DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20),
-								MOF_STOP_LOCATION | ((this->vehicle->GetOrder(sel)->GetStopLocation() + 1) % OSL_END) << 4,
+								MOF_STOP_LOCATION | ((this->vehicle->GetOrder(sel)->GetStopLocation() + 1) % OSL_END) << 8,
 								CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 					}
 				} else {
@@ -1442,15 +1470,11 @@ public:
 			case WID_O_SHARED_ORDER_LIST:
 				ShowVehicleListWindow(this->vehicle);
 				break;
-				
+
 			case WID_O_DECOUPLE:
-				if (this->GetWidget<NWidgetLeaf>(widget)->ButtonHit(pt)) {
-					OrderClick_Decouple(-1);
-				} else {
-					ShowDropDownMenu(this, _order_decouple_drowdown, 0, WID_O_DECOUPLE, 0, 0);
-				}
+				OrderClick_Decouple();
 				break;
-				
+
 			case WID_O_COUPLE_LOAD:
 				if (this->GetWidget<NWidgetLeaf>(widget)->ButtonHit(pt)) {
 					OrderClick_CoupleLoad(-1);
@@ -1458,10 +1482,11 @@ public:
 					ShowDropDownMenu(this, _order_couple_load_drowdown, 0, WID_O_COUPLE_LOAD, 0, 0);
 				}
 				break;
-				
+
 			case WID_O_COUPLE_CARGO:
 				OrderClick_CoupleCargo();
 				break;
+
 			case WID_O_COUPLE_VALUE: {
 				const Order *order = this->vehicle->GetOrder(this->OrderGetSel());
 				uint value = order->GetNumCouple();
@@ -1469,6 +1494,30 @@ public:
 				ShowQueryString(STR_JUST_INT, STR_ORDER_DECOUPLE_VALUE_CAPT, 4, this, CS_NUMERAL, QSF_NONE);
 				break;
 			}
+
+			case WID_O_DECOUPLE_VALUE: {
+				const Order *order = this->vehicle->GetOrder(this->OrderGetSel());
+				uint value = order->GetNumDecouple();
+				SetDParam(0, value);
+				ShowQueryString(STR_JUST_INT, STR_ORDER_DECOUPLE_VALUE_CAPT, 4, this, CS_NUMERAL, QSF_NONE);
+				break;
+			}
+
+			case WID_O_ORDERS_FIRST:
+				if (this->GetWidget<NWidgetLeaf>(widget)->ButtonHit(pt)) {
+					OrderClick_OrdersFirst(0);
+				} else {
+					ShowDropDownMenu(this, _order_decouple_orders_drowdown, 0, WID_O_ORDERS_FIRST, 0, 0);
+				}
+				break;
+
+			case WID_O_ORDERS_SECOND:
+				if (this->GetWidget<NWidgetLeaf>(widget)->ButtonHit(pt)) {
+					OrderClick_OrdersSecond(0);
+				} else {
+					ShowDropDownMenu(this, _order_decouple_orders_drowdown, 0, WID_O_ORDERS_SECOND, 0, 0);
+				}
+				break;
 		}
 	}
 
@@ -1491,11 +1540,11 @@ public:
 					default:
 						break;
 				}
-				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_COND_VALUE | Clamp(value, 0, 2047) << 4, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
-			} else if (this->vehicle->GetOrder(sel)->IsType(OT_GOTO_STATION)) {
-				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_DECOUPLE_VALUE | Clamp(value, 1, 127) << 4, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_COND_VALUE | Clamp(value, 0, 2047) << 8, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+			} else if (this->vehicle->GetOrder(sel)->IsType(OT_DECOUPLE)) {
+				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_DECOUPLE_VALUE | Clamp(value, 1, 127) << 8, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 			} else {
-				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_COUPLE_VALUE | Clamp(value, 0, 127) << 4, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+				DoCommandP(this->vehicle->tile, this->vehicle->index + (sel << 20), MOF_COUPLE_VALUE | Clamp(value, 0, 127) << 8, CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 			}
 		}
 	}
@@ -1536,25 +1585,23 @@ public:
 				break;
 
 			case WID_O_COND_VARIABLE:
-				DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_COND_VARIABLE | index << 4,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+				DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_COND_VARIABLE | index << 8,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 				break;
 
 			case WID_O_COND_COMPARATOR:
-				DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_COND_COMPARATOR | index << 4,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
+				DoCommandP(this->vehicle->tile, this->vehicle->index + (this->OrderGetSel() << 20), MOF_COND_COMPARATOR | index << 8,  CMD_MODIFY_ORDER | CMD_MSG(STR_ERROR_CAN_T_MODIFY_THIS_ORDER));
 				break;
-				
-			case WID_O_DECOUPLE:
-				if (index == 0) {
-					this->OrderClick_Decouple(1);
-				} else {
-					const Order *order = this->vehicle->GetOrder(this->OrderGetSel());
-					uint value = order->GetNumDecouple();
-					SetDParam(0, value);
-					ShowQueryString(STR_JUST_INT, STR_ORDER_DECOUPLE_VALUE_CAPT, 4, this, CS_NUMERAL, QSF_NONE);
-				}
-				break;
+
 			case WID_O_COUPLE_LOAD:
 				OrderClick_CoupleLoad(index);
+				break;
+
+			case WID_O_ORDERS_FIRST:
+				OrderClick_OrdersFirst(index);
+				break;
+
+			case WID_O_ORDERS_SECOND:
+				OrderClick_OrdersSecond(index);
 				break;
 		}
 	}
@@ -1757,6 +1804,14 @@ static const NWidgetPart _nested_orders_train_widgets[] = {
 				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_COUPLE_VALUE), SetMinimalSize(124, 12), SetFill(1, 0),
 															SetDataTip(STR_ORDERS_COUPLE_VALUE_BUTTON, STR_ORDER_CONDITIONAL_VALUE_TOOLTIP), SetResize(1, 0),
 			EndContainer(),
+			NWidget(NWID_HORIZONTAL, NC_EQUALSIZE),
+				NWidget(NWID_BUTTON_DROPDOWN, COLOUR_GREY, WID_O_ORDERS_FIRST), SetMinimalSize(124, 12), SetFill(1, 0),
+															SetDataTip(STR_ORDERS_DECOUPLE_FIRST_KEEP_ORDERS_BUTTON, STR_ORDER_CONDITIONAL_VARIABLE_TOOLTIP), SetResize(1, 0),
+				NWidget(NWID_BUTTON_DROPDOWN, COLOUR_GREY, WID_O_ORDERS_SECOND), SetMinimalSize(124, 12), SetFill(1, 0),
+															SetDataTip(STR_ORDERS_DECOUPLE_SECOND_KEEP_ORDERS_BUTTON, STR_ORDER_CONDITIONAL_COMPARATOR_TOOLTIP), SetResize(1, 0),
+				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_DECOUPLE_VALUE), SetMinimalSize(124, 12), SetFill(1, 0),
+															SetDataTip(STR_ORDERS_DECOUPLE_VALUE_BUTTON, STR_ORDER_CONDITIONAL_VALUE_TOOLTIP), SetResize(1, 0),
+			EndContainer(),
 		EndContainer(),
 		NWidget(WWT_PUSHIMGBTN, COLOUR_GREY, WID_O_SHARED_ORDER_LIST), SetMinimalSize(12, 12), SetDataTip(SPR_SHARED_ORDERS_ICON, STR_ORDERS_VEH_WITH_SHARED_ORDERS_LIST_TOOLTIP),
 	EndContainer(),
@@ -1764,17 +1819,17 @@ static const NWidgetPart _nested_orders_train_widgets[] = {
 	/* Second button row. */
 	NWidget(NWID_HORIZONTAL),
 		NWidget(NWID_HORIZONTAL, NC_EQUALSIZE),
-			NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_SKIP), SetMinimalSize(124, 12), SetFill(1, 0),
+			NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_SKIP), SetMinimalSize(93, 12), SetFill(1, 0),
 													SetDataTip(STR_ORDERS_SKIP_BUTTON, STR_ORDERS_SKIP_TOOLTIP), SetResize(1, 0),
-			NWidget(NWID_BUTTON_DROPDOWN, COLOUR_GREY, WID_O_DECOUPLE), SetMinimalSize(124, 12), SetFill(1, 0),
+			NWidget(WWT_TEXTBTN, COLOUR_GREY, WID_O_DECOUPLE), SetMinimalSize(93, 12), SetFill(1, 0),
 													SetDataTip(STR_ORDERS_DECOUPLE_BUTTON, STR_ORDERS_DECOUPLE_TOOLTIP), SetResize(1, 0),
 			NWidget(NWID_SELECTION, INVALID_COLOUR, WID_O_SEL_BOTTOM_MIDDLE),
-				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_DELETE), SetMinimalSize(124, 12), SetFill(1, 0),
+				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_DELETE), SetMinimalSize(93, 12), SetFill(1, 0),
 														SetDataTip(STR_ORDERS_DELETE_BUTTON, STR_ORDERS_DELETE_TOOLTIP), SetResize(1, 0),
-				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_STOP_SHARING), SetMinimalSize(124, 12), SetFill(1, 0),
+				NWidget(WWT_PUSHTXTBTN, COLOUR_GREY, WID_O_STOP_SHARING), SetMinimalSize(93, 12), SetFill(1, 0),
 														SetDataTip(STR_ORDERS_STOP_SHARING_BUTTON, STR_ORDERS_STOP_SHARING_TOOLTIP), SetResize(1, 0),
 			EndContainer(),
-			NWidget(NWID_BUTTON_DROPDOWN, COLOUR_GREY, WID_O_GOTO), SetMinimalSize(124, 12), SetFill(1, 0),
+			NWidget(NWID_BUTTON_DROPDOWN, COLOUR_GREY, WID_O_GOTO), SetMinimalSize(93, 12), SetFill(1, 0),
 													SetDataTip(STR_ORDERS_GO_TO_BUTTON, STR_ORDERS_GO_TO_TOOLTIP), SetResize(1, 0),
 		EndContainer(),
 		NWidget(WWT_RESIZEBOX, COLOUR_GREY),

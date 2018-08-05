@@ -858,6 +858,9 @@ STR_NEWS_AIRCRAFT_DEST_TOO_FAR                                  :{WHITE}{VEHICLE
 STR_NEWS_ORDER_REFIT_FAILED                                     :{WHITE}{VEHICLE} stopped because an ordered refit failed
 STR_NEWS_VEHICLE_AUTORENEW_FAILED                               :{WHITE}Autorenew failed on {VEHICLE}{}{STRING}
 
+STR_NEWS_ORDER_DECOUPLE_FAILED                                  :{WHITE}Failed to decouple {VEHICLE}
+STR_NEWS_ORDER_COUPLE_FAILED                                    :{WHITE}Failed to couple {VEHICLE} and {VEHICLE}
+
 STR_NEWS_NEW_VEHICLE_NOW_AVAILABLE                              :{BIG_FONT}{BLACK}New {STRING} now available!
 STR_NEWS_NEW_VEHICLE_TYPE                                       :{BIG_FONT}{BLACK}{ENGINE}
 STR_NEWS_NEW_VEHICLE_NOW_AVAILABLE_WITH_TYPE                    :{BLACK}New {STRING} now available!  -  {ENGINE}
@@ -3804,6 +3807,13 @@ STR_ORDERS_COUPLE_LOAD_ANY                                      :Couple any
 STR_ORDERS_COUPLE_LOAD_EMPTY                                    :Couple empty
 STR_ORDERS_COUPLE_LOAD_FULL                                     :Couple full
 
+STR_ORDERS_DECOUPLE_FIRST_KEEP_ORDERS_BUTTON                    :{BLACK}First: Keep orders
+STR_ORDERS_DECOUPLE_SECOND_KEEP_ORDERS_BUTTON                   :{BLACK}Second: Keep orders
+STR_ORDERS_DECOUPLE_KEEP_ORDERS                                 :Keep orders
+STR_ORDERS_DECOUPLE_KEEP_ORDERS_NO_LOAD                         :Keep and no loading
+STR_ORDERS_DECOUPLE_INHERIT_ORDERS                              :Inherit
+STR_ORDERS_DECOUPLE_WAIT_FOR_COUPLE                             :Wait for couple
+
 STR_ORDER_CONDITIONAL_VARIABLE_TOOLTIP                          :{BLACK}Vehicle data to base jumping on
 
 # Conditional order variables, must follow order of OrderConditionVariable enum
@@ -3832,6 +3842,7 @@ STR_ORDERS_SKIP_BUTTON                                          :{BLACK}Skip
 STR_ORDERS_SKIP_TOOLTIP                                         :{BLACK}Skip the current order, and start the next. Ctrl+Click skips to the selected order
 
 STR_ORDERS_COUPLE_VALUE_BUTTON                                  :{BLACK}Units couple
+STR_ORDERS_DECOUPLE_VALUE_BUTTON                                :{BLACK}Units decouple
 
 STR_ORDERS_DECOUPLE_BUTTON                                      :{BLACK}Decouple
 STR_ORDERS_DECOUPLE_DROP                                        :Decouple
@@ -3904,8 +3915,15 @@ STR_ORDER_NO_UNLOAD_FULL_LOAD                                   :(No unloading a
 STR_ORDER_NO_UNLOAD_FULL_LOAD_ANY                               :(No unloading and wait for any full load)
 STR_ORDER_NO_UNLOAD_NO_LOAD                                     :(No unloading and no loading)
 
-STR_ORDER_DECOUPLE                                              :(Decouple and keep {COMMA} units)
+STR_ORDER_DECOUPLE                                              :(Decouple)
+STR_ORDER_DECOUPLE_DETAILS                                      :[Decouple {COMMA} units] First part {STRING} Second part {STRING}
+
 STR_ORDER_COUPLE_UNITS                                          :(with {COMMA} units)
+
+STR_ORDER_DECOUPLE_KEEP_ORDERS                                  :(Keep orders)
+STR_ORDER_DECOUPLE_KEEP_ORDERS_NO_LOAD                          :(Keep orders without loading/unloading)
+STR_ORDER_DECOUPLE_INHERIT_ORDERS                               :(Inherit orders)
+STR_ORDER_DECOUPLE_WAIT_FOR_COUPLE                              :(Wait for couple)
 
 STR_ORDER_AUTO_REFIT                                            :(Refit to {STRING})
 STR_ORDER_FULL_LOAD_REFIT                                       :(Full load with refit to {STRING})

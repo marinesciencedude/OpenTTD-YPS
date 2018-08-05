@@ -40,9 +40,12 @@ enum OrderWidgets {
 	WID_O_SEL_BOTTOM_MIDDLE,         ///< #NWID_SELECTION widget for the middle part of the bottom row of the 'your train' order window.
 	WID_O_SHARED_ORDER_LIST,         ///< Open list of shared vehicles.
 	WID_O_DECOUPLE,                  ///< Decouple at station.
+	WID_O_DECOUPLE_VALUE,            ///< Select number of units for decoupling.
 	WID_O_COUPLE_LOAD,               ///< Select couple load.
 	WID_O_COUPLE_CARGO,              ///< Select cargotype for coupling
 	WID_O_COUPLE_VALUE,              ///< Select number of units for coupling
+	WID_O_ORDERS_FIRST,              ///< Select orders for first part of decoupled train
+	WID_O_ORDERS_SECOND,             ///< Select orders for second part of decoupled train
 };
 
 #endif /* WIDGETS_ORDER_WIDGET_H */

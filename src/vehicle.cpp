@@ -1449,7 +1449,7 @@ void VehicleEnterDepot(Vehicle *v)
 			t->wait_counter = 0;
 			t->force_proceed = TFP_NONE;
 			ClrBit(t->flags, VRF_TOGGLE_REVERSE);
-			t->ConsistChanged(CCF_ARRANGE);
+			t->ConsistChanged(CCF_ARRANGE_STATION);
 			break;
 		}
 
@@ -2250,6 +2250,8 @@ void Vehicle::HandleLoading(bool mode)
 	}
 
 	this->IncrementImplicitOrderIndex();
+	const Order *decouple_order = this->GetOrder(this->cur_implicit_order_index);
+	if (decouple_order != NULL && decouple_order->IsType(OT_DECOUPLE)) this->IncrementImplicitOrderIndex();
 }
 
 /**

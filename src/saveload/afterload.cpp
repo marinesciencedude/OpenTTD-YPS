@@ -2988,6 +2988,30 @@ bool AfterLoadGame()
 		Station *st;
 		FOR_ALL_STATIONS(st) UpdateStationAcceptance(st, false);
 	}
+	
+	if (IsSavegameVersionBefore(200)) {
+		Vehicle *v;
+		FOR_ALL_VEHICLES(v) {
+			Order *o;
+			int num_order = 1;
+			FOR_VEHICLE_ORDERS(v, o) {
+				if (o->IsType(OT_GOTO_STATION) && o->GetDecouple() == ODF_DECOUPLE) {
+					if (o->next != NULL && !o->next->IsType(OT_DECOUPLE)) {
+						if (Order::CanAllocateItem()) {
+							Order *new_order = new Order();
+							new_order->MakeDecouple();
+							new_order->SetDecoupleFirstOrdersType(ODOF_KEEP_ORDERS_NO_LOAD);
+							new_order->SetDecoupleSecondOrdersType(ODOF_INHERIT_ORDERS);
+							new_order->SetNumDecouple(o->GetNumDecouple());
+							InsertOrder(v, new_order, num_order);
+							o->SetNumDecouple(0);
+						}
+					}
+				}
+				num_order++;
+			}
+		}
+	}
 
 	/* Road stops is 'only' updating some caches */
 	AfterLoadRoadStops();

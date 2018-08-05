@@ -774,6 +774,11 @@ CommandCost CmdInsertOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 	CommandCost ret = CheckOwnership(v->owner);
 	if (ret.Failed()) return ret;
 
+	if (sel_ord < v->GetNumOrders()) {
+		Order *selected_order = v->GetOrder(sel_ord);
+		if (selected_order->GetType() == OT_DECOUPLE) sel_ord--;
+	}
+
 	/* Check if the inserted order is to the correct destination (owner, type),
 	 * and has the correct flags if any */
 	switch (new_order.GetType()) {
@@ -1103,6 +1108,10 @@ CommandCost CmdDeleteOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 	if (sel_ord >= v->GetNumOrders()) return DecloneOrder(v, flags);
 
 	if (v->GetOrder(sel_ord) == NULL) return CMD_ERROR;
+	Order *next_order = v->GetOrder(sel_ord + 1);
+	if (next_order != NULL && next_order->IsType(OT_DECOUPLE)) {
+		DoCommand(tile, v->index, sel_ord + 1, flags, CMD_DELETE_ORDER);
+	}
 
 	if (flags & DC_EXEC) DeleteOrder(v, sel_ord);
 	return CommandCost();
@@ -1200,6 +1209,9 @@ CommandCost CmdSkipToOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 	Vehicle *v = Vehicle::GetIfValid(veh_id);
 
+	Order *order = v->GetOrder(sel_ord);
+	if (order->GetType() == OT_DECOUPLE) sel_ord = (sel_ord + 1) % v->GetNumOrders();
+
 	if (v == NULL || !v->IsPrimaryVehicle() || sel_ord == v->cur_implicit_order_index || sel_ord >= v->GetNumOrders() || v->GetNumOrders() < 2) return CMD_ERROR;
 
 	CommandCost ret = CheckOwnership(v->owner);
@@ -1253,6 +1265,13 @@ CommandCost CmdMoveOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint32 
 	Order *moving_one = v->GetOrder(moving_order);
 	/* Don't move an empty order */
 	if (moving_one == NULL) return CMD_ERROR;
+	if (moving_one->IsType(OT_DECOUPLE)) return CMD_ERROR;
+	
+	Order *after_moving_one = v->GetOrder(moving_order + 1);
+	if (after_moving_one != NULL && after_moving_one->IsType(OT_DECOUPLE)) return CMD_ERROR;
+	
+	Order *target_one = v->GetOrder(moving_order > target_order ? target_order : target_order + 1);
+	if (target_one != NULL && target_one->IsType(OT_DECOUPLE)) return CMD_ERROR;
 
 	if (flags & DC_EXEC) {
 		v->orders.list->MoveOrder(moving_order, target_order);
@@ -1333,8 +1352,8 @@ CommandCost CmdMoveOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint32 
  *                        the order will be inserted before that one
  *                        the maximum vehicle order id is 254.
  * @param p2 various bitstuffed elements
- *  - p2 = (bit 0 -  3) - what data to modify (@see ModifyOrderFlags)
- *  - p2 = (bit 4 - 15) - the data to modify
+ *  - p2 = (bit 0 -  7) - what data to modify (@see ModifyOrderFlags)
+ *  - p2 = (bit 8 - 19) - the data to modify
  * @param text unused
  * @return the cost of this operation or an error
  */
@@ -1342,8 +1361,8 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 {
 	VehicleOrderID sel_ord = GB(p1, 20,  8);
 	VehicleID veh          = GB(p1,  0, 20);
-	ModifyOrderFlags mof   = Extract<ModifyOrderFlags, 0, 4>(p2);
-	uint16 data            = GB(p2,  4, 11);
+	ModifyOrderFlags mof   = Extract<ModifyOrderFlags, 0, 8>(p2);
+	uint16 data            = GB(p2,  8, 11);
 
 	if (mof >= MOF_END) return CMD_ERROR;
 
@@ -1359,7 +1378,7 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 	Order *order = v->GetOrder(sel_ord);
 	switch (order->GetType()) {
 		case OT_GOTO_STATION:
-			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD && mof != MOF_DECOUPLE && mof != MOF_DECOUPLE_VALUE) return CMD_ERROR;
+			if (mof != MOF_NON_STOP && mof != MOF_STOP_LOCATION && mof != MOF_UNLOAD && mof != MOF_LOAD && mof != MOF_DECOUPLE) return CMD_ERROR;
 			break;
 
 		case OT_GOTO_DEPOT:
@@ -1378,13 +1397,23 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 			if (mof != MOF_COUPLE_LOAD && mof != MOF_COUPLE_CARGO && mof != MOF_COUPLE_VALUE) return CMD_ERROR;
 			break;
 
+		case OT_DECOUPLE:
+			if (mof != MOF_FIRST_ORDERS && mof != MOF_SECOND_ORDERS && mof != MOF_DECOUPLE_VALUE) return CMD_ERROR;
+			break;
+
 		default:
 			return CMD_ERROR;
 	}
 
 	switch (mof) {
 		default: NOT_REACHED();
-		
+
+		case MOF_SECOND_ORDERS:
+		case MOF_FIRST_ORDERS:
+			if (v->type != VEH_TRAIN) return CMD_ERROR;
+			if (data >= ODOF_END) return CMD_ERROR;
+			break;
+
 		case MOF_DECOUPLE:
 			if (v->type != VEH_TRAIN) return CMD_ERROR;
 			if (order->GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION) return CMD_ERROR;
@@ -1564,27 +1593,28 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 				order->SetConditionSkipToOrder(data);
 				break;
 				
-			case MOF_DECOUPLE_VALUE: {
+			case MOF_DECOUPLE_VALUE:
 				order->SetNumDecouple(data);
-				data = ODF_DECOUPLE;
-			}
-				FALLTHROUGH;
+				break;
+
 			case MOF_DECOUPLE: {
 				OrderDecoupleFlags decouple_flags = order->GetDecouple();
 				order->SetDecouple(data);
 				if (decouple_flags == ODF_DECOUPLE && order->GetDecouple() == ODF_NOTHING) {
-					//DoCommand(tile, v->index, sel_ord + 1, DC_EXEC, CMD_DELETE_ORDER);
+					DoCommand(tile, v->index, sel_ord + 1, DC_EXEC, CMD_DELETE_ORDER);
 				}
 				if (decouple_flags == ODF_NOTHING && order->GetDecouple() == ODF_DECOUPLE) {
-					/*Order new_order;
+					Order new_order;
 					new_order.next = NULL;
 					new_order.index = 0;
 					new_order.MakeDecouple();
-					DoCommand(tile, v->index + ((sel_ord + 1) << 20), new_order.Pack(), DC_EXEC, CMD_INSERT_ORDER);*/
+					new_order.SetDecoupleFirstOrdersType(ODOF_KEEP_ORDERS_NO_LOAD);
+					new_order.SetDecoupleSecondOrdersType(ODOF_INHERIT_ORDERS);
+					DoCommand(tile, v->index + ((sel_ord + 1) << 20), new_order.Pack(), DC_EXEC, CMD_INSERT_ORDER);
 				}
-			}
 				break;
-				
+			}
+
 			case MOF_COUPLE_LOAD:
 				order->SetCoupleLoad((OrderCoupleFlags)data);
 				break;
@@ -1595,6 +1625,14 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 				
 			case MOF_COUPLE_VALUE:
 				order->SetNumCouple(data);
+				break;
+
+			case MOF_FIRST_ORDERS:
+				order->SetDecoupleFirstOrdersType((OrderDecoupleOrdersFlags)data);
+				break;
+
+			case MOF_SECOND_ORDERS:
+				order->SetDecoupleSecondOrdersType((OrderDecoupleOrdersFlags)data);
 				break;
 
 			default: NOT_REACHED();
@@ -2300,7 +2338,7 @@ bool ProcessOrders(Vehicle *v)
 	 * will be reset to nothing. (That also happens if no order, but in that case
 	 * it won't hit the point in code where may_reverse is checked)
 	 */
-	bool may_reverse = v->current_order.IsType(OT_NOTHING);
+	bool may_reverse = v->current_order.IsType(OT_NOTHING) || v->current_order.IsType(OT_GOTO_COUPLE);
 
 	/* Check if we've reached a 'via' destination. */
 	if (((v->current_order.IsType(OT_GOTO_STATION) && (v->current_order.GetNonStopType() & ONSF_NO_STOP_AT_DESTINATION_STATION)) || v->current_order.IsType(OT_GOTO_WAYPOINT)) &&

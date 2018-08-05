@@ -166,6 +166,10 @@ public:
 	inline OrderCoupleFlags GetCoupleLoad() const { return (OrderCoupleFlags)GB(this->flags, 0, 3); }
 	/** How many wagons are we taking */
 	inline uint8 GetNumCouple() const { return GB(this->decouple_flags, 1, 7); }
+	/** What orders should first part get */
+	inline OrderDecoupleOrdersFlags GetDecoupleFirstOrdersType() const { return (OrderDecoupleOrdersFlags)GB(this->flags, 0, 3); }
+	/** What orders should second part get */
+	inline OrderDecoupleOrdersFlags GetDecoupleSecondOrdersType() const { return (OrderDecoupleOrdersFlags)GB(this->flags, 4, 3); }
 
 	/** Set how the consist must be loaded. */
 	inline void SetLoadType(OrderLoadFlags load_type) { SB(this->flags, 4, 3, load_type); }
@@ -195,6 +199,10 @@ public:
 	inline void SetCoupleLoad(OrderCoupleFlags load_type) { SB(this->flags, 0, 3, load_type); }
 	/** Set how many units to take */
 	inline void SetNumCouple(uint8 value) { SB(this->decouple_flags, 1, 7, value); }
+	/** Set what orders should first part get */
+	inline void SetDecoupleFirstOrdersType(OrderDecoupleOrdersFlags orders_type) { SB(this->flags, 0, 3, orders_type); }
+	/** Set what orders should second part get */
+	inline void SetDecoupleSecondOrdersType(OrderDecoupleOrdersFlags orders_type) { SB(this->flags, 4, 3, orders_type); }
 
 
 	/* As conditional orders write their "skip to" order all over the flags, we cannot check the
