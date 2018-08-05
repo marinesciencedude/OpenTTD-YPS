@@ -187,11 +187,11 @@ bool Train::ConsistChanged(ConsistChangeFlags allowed_changes)
 		u->InvalidateNewGRFCache();
 	}
 
-	if (allowed_changes & CCF_IMMUTABLE) {
+	/*if (allowed_changes & CCF_IMMUTABLE) {
 		for (Train *u = this; u != NULL; u = u->Next()) {
 			StoreImmutableVariables(u);
 		}
-	}
+	}*/
 
 	for (Train *u = this; u != NULL; u = u->Next()) {
 		const Engine *e_u = u->GetEngine();
