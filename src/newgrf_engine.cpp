@@ -450,7 +450,11 @@ static uint32 PositionHelper(const Vehicle *v, bool consecutive)
 
 static uint32 VehicleGetVariable(Vehicle *v, const VehicleScopeResolver *object, byte variable, uint32 parameter, bool *available)
 {
-	/*if (object->parent_scope_active) */ //DEBUG(misc, 0, "NewGRF variable: %x, parent active: %d", variable, object->parent_scope_active);
+	if (v->type == VEH_TRAIN) {
+		if (object->var_scope == VSG_SCOPE_PARENT) DEBUG(misc, 0, "vehicle: %d, NewGRF variable: %x, parent active", v->First()->unitnumber, variable);
+		if (object->var_scope == VSG_SCOPE_SELF) DEBUG(misc, 1, "vehicle: %d, NewGRF variable: %x, self active", v->First()->unitnumber, variable);
+		if (object->var_scope == VSG_SCOPE_RELATIVE) DEBUG(misc, 0, "vehicle: %d, NewGRF variable: %x, relative active", v->First()->unitnumber, variable);
+	}
 	
 	/* Calculated vehicle parameters */
 	switch (variable) {
@@ -891,7 +895,7 @@ static uint32 VehicleGetVariable(Vehicle *v, const VehicleScopeResolver *object,
 
 uint32 GetImmutableVariableIfAvailable(const Train *t, const VehicleScopeResolver *object, byte variable, bool *available)
 {
-	if (object->parent_scope_active) {
+	if (object->var_scope == VSG_SCOPE_PARENT) {
 		switch (variable) {
 			case 0xC6: return t->parent_local_id;
 			case 0xF2: return t->parent_cargo_subtype;
@@ -935,18 +939,21 @@ uint32 GetImmutableVariableIfAvailable(const Train *t, const VehicleScopeResolve
 		return UINT_MAX;
 	}
 
-	/*if (this->v->type == VEH_TRAIN) {
+	if (this->v->type == VEH_TRAIN) {
 		uint32 ret = GetImmutableVariableIfAvailable(Train::From(this->self_v), this, variable, available);
 		if (*available) return ret;
 
 		*available = true;
-	}*/
+	}
 
 	return VehicleGetVariable(const_cast<Vehicle*>(this->v), this, variable, parameter, available);
 }
 
 void StoreImmutableVariables(Vehicle *v)
 {
+	VehicleResolverObject object(v->engine_type, v, VehicleResolverObject::WO_NONE, false, CBID_NO_CALLBACK);
+	//const VehicleScopeResolver
+
 	Train *t = Train::From(v);
 	//VehicleGetVariable(const_cast<Vehicle*>(this->v), this, variable, parameter, available);
 	/* Self variables */
@@ -955,8 +962,8 @@ void StoreImmutableVariables(Vehicle *v)
 	/* Parent variables */
 	Vehicle *parent = v->First();
 
-	t->parent_local_id      = VehicleGetVariable(parent, NULL, 0xC6, 0, NULL);
-	t->parent_cargo_subtype = VehicleGetVariable(parent, NULL, 0xF2, 0, NULL);
+	t->parent_local_id      = VehicleGetVariable(parent, &object.parent_scope, 0xC6, 0, NULL);
+	t->parent_cargo_subtype = VehicleGetVariable(parent, &object.parent_scope, 0xF2, 0, NULL);
 }
 
 
@@ -1006,9 +1013,9 @@ static const GRFFile *GetEngineGrfFile(EngineID engine_type)
 VehicleResolverObject::VehicleResolverObject(EngineID engine_type, const Vehicle *v, WagonOverride wagon_override, bool info_view,
 		CallbackID callback, uint32 callback_param1, uint32 callback_param2)
 	: ResolverObject(GetEngineGrfFile(engine_type), callback, callback_param1, callback_param2),
-	self_scope(*this, engine_type, v, info_view, false, v),
-	parent_scope(*this, engine_type, ((v != NULL) ? v->First() : v), info_view, true, v),
-	relative_scope(*this, engine_type, v, info_view, false, v),
+	self_scope(*this, engine_type, v, info_view, VSG_SCOPE_SELF, v),
+	parent_scope(*this, engine_type, ((v != NULL) ? v->First() : v), info_view, VSG_SCOPE_PARENT, v),
+	relative_scope(*this, engine_type, v, info_view, VSG_SCOPE_RELATIVE, v),
 	cached_relative_count(0)
 {
 	if (wagon_override == WO_SELF) {
