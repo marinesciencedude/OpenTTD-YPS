@@ -524,7 +524,7 @@ int Train::GetDisplayImageWidth(Point *offset) const
 	if (offset != NULL) {
 		offset->x = ScaleGUITrad(reference_width) / 2;
 		if (HasBit(this->flags, VRF_REVERSE_DIRECTION)) {
-			offset->x -= (VEHICLE_LENGTH - this->gcache.cached_veh_length) * reference_width / VEHICLE_LENGTH;
+			offset->x -= ScaleGUITrad((VEHICLE_LENGTH - this->gcache.cached_veh_length) * reference_width / VEHICLE_LENGTH);
 		}
 		offset->y = ScaleGUITrad(vehicle_pitch);
 	}
