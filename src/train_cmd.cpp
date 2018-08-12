@@ -1069,12 +1069,19 @@ static CommandCost CheckTrainAttachment(Train *t)
 
 		Train *next = t->Next();
 
+		bool main_part = false;
+		if (!HasBit(t->flags, VRF_REVERSE_DIRECTION)) {
+			if (!t->IsArticulatedPart()) main_part = true;
+		} else {
+			if (!t->HasArticulatedPart()) main_part = true;
+		}
+
 		/* Unlink the to-be-added piece; it is already unlinked from the previous
 		 * part due to the fact that the prev -> t link is broken. */
 		t->SetNext(NULL);
 
 		/* Don't check callback for articulated or rear dual headed parts */
-		if (!t->IsArticulatedPart() && !t->IsRearDualheaded()) {
+		if (main_part && !t->IsRearDualheaded()) {
 			/* Back up and clear the first_engine data to avoid using wagon override group */
 			EngineID first_engine = t->gcache.first_engine;
 			t->gcache.first_engine = INVALID_ENGINE;
@@ -2138,12 +2145,44 @@ static bool CanDecouple(Train *v)
 	return true;
 }
 
+uint GetDecoupleVehicleAuto(Train *v)
+{
+	uint engines_front = 0;
+	uint engines_back = 0;
+	uint pos = 1;
+	bool has_wagons = false;
+	bool multihead_front = false;
+	for (Train *t = v; t != NULL; t = t->GetNextVehicle(), pos++) {
+		if (t->IsEngine()) {
+			if (t->IsMultiheaded()) {
+				if (multihead_front) {
+					return pos;
+				}
+				multihead_front = true;
+			}
+			if (has_wagons) {
+				engines_back++;
+			} else {
+				engines_front++;
+			}
+		} else {
+			has_wagons = true;
+		}
+	}
+	if (engines_front > 0 && has_wagons) return engines_front;
+	if (engines_back > 0 && has_wagons) return CountVehiclesInVehicles(v) - engines_back;
+	return 1;
+}
+
 static Train *GetDecoupleVehicle(Train *v)
 {
+	Order *decouple_order = v->orders.list->GetOrderAt(v->cur_implicit_order_index + 1);
+	uint num_decouple = decouple_order->GetNumDecouple();
+	if (num_decouple == 0) num_decouple = GetDecoupleVehicleAuto(v);
 	Train *ret = v->GetNextVehicle();
 	bool multihead_front = v->IsMultiheaded();
-	Order *decouple_order = v->orders.list->GetOrderAt(v->cur_implicit_order_index + 1);
-	for (int i = 1; i < decouple_order->GetNumDecouple() && ret->GetNextVehicle() != NULL; i++) {
+	
+	for (uint i = 1; i < num_decouple && ret->GetNextVehicle() != NULL; i++) {
 		if (multihead_front) {
 			if (ret->IsRearDualheaded()) multihead_front = false;
 		} else {
