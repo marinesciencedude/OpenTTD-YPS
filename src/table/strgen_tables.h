@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: strgen_tables.h 27295 2015-05-28 17:26:53Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

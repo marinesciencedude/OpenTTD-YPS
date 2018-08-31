@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: npf_func.h 24481 2012-08-18 11:37:47Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -16,6 +16,7 @@
 #include "../../direction_type.h"
 #include "../../vehicle_type.h"
 #include "../pathfinder_type.h"
+#include "../../pbs.h"
 
 /**
  * Used when user sends road vehicle to the nearest depot or if road vehicle needs servicing using NPF.
@@ -75,7 +76,7 @@ FindDepotData NPFTrainFindNearestDepot(const Train *v, int max_penalty);
  * @param override_railtype Should all physically compatible railtypes be searched, even if the vehicle can't run on them on its own?
  * @return True if the path could be extended to a safe tile.
  */
-bool NPFTrainFindNearestSafeTile(const Train *v, TileIndex tile, Trackdir td, bool override_railtype);
+PBSTileInfo NPFTrainFindNearestSafeTile(const Train *v, TileIndex tile, Trackdir td, bool override_railtype);
 
 /**
  * Returns true if it is better to reverse the train before leaving station using NPF.

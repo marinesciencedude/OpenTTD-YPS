@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: palettes.h 27340 2015-07-26 09:47:17Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: road.cpp 27424 2015-10-30 17:19:01Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

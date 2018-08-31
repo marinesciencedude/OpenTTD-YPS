@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: tgp.cpp 27334 2015-07-16 17:05:40Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

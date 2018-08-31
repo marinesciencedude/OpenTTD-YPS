@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: town_gui.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -267,9 +267,10 @@ public:
 					this->sel_index = y;
 					this->SetDirty();
 				}
-				/* FALL THROUGH, when double-clicking. */
+				/* When double-clicking, continue */
 				if (click_count == 1 || y < 0) break;
 			}
+			FALLTHROUGH;
 
 			case WID_TA_EXECUTE:
 				DoCommandP(this->town->xy, this->window_number, this->sel_index, CMD_DO_TOWN_ACTION | CMD_MSG(STR_ERROR_CAN_T_DO_THIS));

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_text.h 27851 2017-04-09 21:58:07Z peter1138 $ */
 
 /*
  * This file is part of OpenTTD.
@@ -21,7 +21,7 @@
 static const WChar NFO_UTF8_IDENTIFIER = 0x00DE;
 
 StringID AddGRFString(uint32 grfid, uint16 stringid, byte langid, bool new_scheme, bool allow_newlines, const char *text_to_add, StringID def_string);
-StringID GetGRFStringID(uint32 grfid, uint16 stringid);
+StringID GetGRFStringID(uint32 grfid, StringID stringid);
 const char *GetGRFStringFromGRFText(const struct GRFText *text);
 const char *GetGRFStringPtr(uint16 stringid);
 void CleanUpStrings();

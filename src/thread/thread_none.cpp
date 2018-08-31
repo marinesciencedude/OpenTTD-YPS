@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: thread_none.cpp 27670 2016-10-30 17:29:33Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -14,7 +14,7 @@
 
 #include "../safeguards.h"
 
-/* static */ bool ThreadObject::New(OTTDThreadFunc proc, void *param, ThreadObject **thread)
+/* static */ bool ThreadObject::New(OTTDThreadFunc proc, void *param, ThreadObject **thread, const char *name)
 {
 	if (thread != NULL) *thread = NULL;
 	return false;

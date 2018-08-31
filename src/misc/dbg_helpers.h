@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: dbg_helpers.h 27362 2015-08-08 10:06:24Z alberth $ */
 
 /*
  * This file is part of OpenTTD.

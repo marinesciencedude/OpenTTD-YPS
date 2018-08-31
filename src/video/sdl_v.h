@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: sdl_v.h 27775 2017-03-11 13:05:54Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -30,6 +30,10 @@ public:
 	/* virtual */ bool ToggleFullscreen(bool fullscreen);
 
 	/* virtual */ bool AfterBlitterChange();
+
+	/* virtual */ void AcquireBlitterLock();
+
+	/* virtual */ void ReleaseBlitterLock();
 
 	/* virtual */ bool ClaimMousePointer();
 

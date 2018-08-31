@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_object.h 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -128,10 +128,11 @@ struct ObjectResolverObject : public ResolverObject {
 			case VSG_SCOPE_PARENT: {
 				TownScopeResolver *tsr = this->GetTown();
 				if (tsr != NULL) return tsr;
-				/* FALL-THROUGH */
 			}
+			FALLTHROUGH;
 
-			default: return ResolverObject::GetScope(scope, relative);
+			default:
+				return ResolverObject::GetScope(scope, relative);
 		}
 	}
 

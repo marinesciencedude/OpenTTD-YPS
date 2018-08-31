@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: vehicle_sl.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -375,6 +375,8 @@ void AfterLoadVehicles(bool part_of_load)
 	FOR_ALL_VEHICLES(v) {
 		assert(v->first != NULL);
 
+		v->trip_occupancy = CalcPercentVehicleFilled(v, NULL);
+
 		switch (v->type) {
 			case VEH_TRAIN: {
 				Train *t = Train::From(v);
@@ -424,6 +426,31 @@ void AfterLoadVehicles(bool part_of_load)
 			}
 		}
 	}
+	
+	/* set non zero max signal speed */
+	
+	if (part_of_load && IsSavegameVersionBefore(197)) {
+		FOR_ALL_VEHICLES(v) {
+			if (v->type == VEH_TRAIN) {
+				Train *t = Train::From(v);
+				if (t->IsFrontEngine()) {
+					t->max_signal_speed = UINT16_MAX;
+				}
+			}
+		}
+	}
+	
+	if (part_of_load && IsSavegameVersionBefore(197)) {
+		FOR_ALL_VEHICLES(v) {
+			if (v->type == VEH_TRAIN) {
+				Train *t = Train::From(v);
+				if (t->IsFrontEngine()) {
+					t->double_yellow_signal_speed = UINT16_MAX;
+					t->yellow_signal_speed = UINT16_MAX;
+				}
+			}
+		}
+	}
 
 	FOR_ALL_VEHICLES(v) {
 		switch (v->type) {
@@ -431,26 +458,26 @@ void AfterLoadVehicles(bool part_of_load)
 				RoadVehicle *rv = RoadVehicle::From(v);
 				rv->roadtype = HasBit(EngInfo(v->First()->engine_type)->misc_flags, EF_ROAD_TRAM) ? ROADTYPE_TRAM : ROADTYPE_ROAD;
 				rv->compatible_roadtypes = RoadTypeToRoadTypes(rv->roadtype);
-				/* FALL THROUGH */
 			}
+			FALLTHROUGH;
 
 			case VEH_TRAIN:
 			case VEH_SHIP:
-				v->cur_image = v->GetImage(v->direction, EIT_ON_MAP);
+				v->GetImage(v->direction, EIT_ON_MAP, &v->sprite_seq);
 				break;
 
 			case VEH_AIRCRAFT:
 				if (Aircraft::From(v)->IsNormalAircraft()) {
-					v->cur_image = v->GetImage(v->direction, EIT_ON_MAP);
+					v->GetImage(v->direction, EIT_ON_MAP, &v->sprite_seq);
 
-					/* The plane's shadow will have the same image as the plane */
+					/* The plane's shadow will have the same image as the plane, but no colour */
 					Vehicle *shadow = v->Next();
-					shadow->cur_image = v->cur_image;
+					shadow->sprite_seq.CopyWithoutPalette(v->sprite_seq);
 
 					/* In the case of a helicopter we will update the rotor sprites */
 					if (v->subtype == AIR_HELICOPTER) {
 						Vehicle *rotor = shadow->Next();
-						rotor->cur_image = GetRotorImage(Aircraft::From(v), EIT_ON_MAP);
+						GetRotorImage(Aircraft::From(v), EIT_ON_MAP, &rotor->sprite_seq);
 					}
 
 					UpdateAircraftCache(Aircraft::From(v), true);
@@ -720,6 +747,10 @@ const SaveLoad *GetVehicleDescription(VehicleType vt)
 		SLE_CONDNULL(2, 2, 59),
 
 		 SLE_CONDVAR(Train, wait_counter,        SLE_UINT16,                 136, SL_MAX_VERSION),
+		 SLE_CONDVAR(Train, max_signal_speed,    SLE_UINT16,                 197, SL_MAX_VERSION),
+		 SLE_CONDVAR(Train, yellow_signal_speed,    SLE_UINT16,                 197, SL_MAX_VERSION),
+		 SLE_CONDVAR(Train, double_yellow_signal_speed,    SLE_UINT16,                 197, SL_MAX_VERSION),
+		 SLE_CONDVAR(Train, planned_speed,    SLE_UINT16,                 197, SL_MAX_VERSION),
 
 		SLE_CONDNULL(2, 2, 19),
 		 SLE_CONDVAR(Train, gv_flags,            SLE_UINT16,                 139, SL_MAX_VERSION),
@@ -796,7 +827,7 @@ const SaveLoad *GetVehicleDescription(VehicleType vt)
 		 SLE_CONDVAR(Vehicle, z_pos,                 SLE_FILE_U8  | SLE_VAR_I32,   0, 163),
 		 SLE_CONDVAR(Vehicle, z_pos,                 SLE_INT32,                  164, SL_MAX_VERSION),
 
-		     SLE_VAR(Vehicle, cur_image,             SLE_FILE_U16 | SLE_VAR_U32),
+		     SLE_VAR(Vehicle, sprite_seq.seq[0].sprite, SLE_FILE_U16 | SLE_VAR_U32),
 		SLE_CONDNULL(5,                                                            0,  57),
 		     SLE_VAR(Vehicle, progress,              SLE_UINT8),
 		     SLE_VAR(Vehicle, vehstatus,             SLE_UINT8),
@@ -836,7 +867,7 @@ const SaveLoad *GetVehicleDescription(VehicleType vt)
 		 SLE_CONDVAR(Vehicle, current_order.dest,    SLE_FILE_U8 | SLE_VAR_U16,    0,   4),
 		 SLE_CONDVAR(Vehicle, current_order.dest,    SLE_UINT16,                   5, SL_MAX_VERSION),
 
-		     SLE_VAR(Vehicle, cur_image,             SLE_FILE_U16 | SLE_VAR_U32),
+		     SLE_VAR(Vehicle, sprite_seq.seq[0].sprite, SLE_FILE_U16 | SLE_VAR_U32),
 		 SLE_CONDVAR(Vehicle, age,                   SLE_FILE_U16 | SLE_VAR_I32,   0,  30),
 		 SLE_CONDVAR(Vehicle, age,                   SLE_INT32,                   31, SL_MAX_VERSION),
 		     SLE_VAR(Vehicle, tick_counter,          SLE_UINT8),

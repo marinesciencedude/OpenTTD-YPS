@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: spritecache.h 27732 2017-01-14 18:30:26Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -32,6 +32,7 @@ bool SpriteExists(SpriteID sprite);
 
 SpriteType GetSpriteType(SpriteID sprite);
 uint GetOriginFileSlot(SpriteID sprite);
+uint GetSpriteCountForSlot(uint file_slot, SpriteID begin, SpriteID end);
 uint GetMaxSpriteID();
 
 

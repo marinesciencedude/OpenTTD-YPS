@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: vehicle_type.h 23080 2011-11-01 16:51:47Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -81,6 +81,7 @@ static const uint VEHICLE_LENGTH = 8;
 enum AccelerationModel {
 	AM_ORIGINAL,
 	AM_REALISTIC,
+	AM_YAAM,
 };
 
 /** Visualisation contexts of vehicles and engines. */

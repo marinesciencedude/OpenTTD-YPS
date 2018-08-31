@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: signs_gui.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -514,7 +514,7 @@ struct SignWindow : Window, SignList {
 
 			case WID_QES_OK:
 				if (RenameSign(this->cur_sign, this->name_editbox.text.buf)) break;
-				/* FALL THROUGH */
+				FALLTHROUGH;
 
 			case WID_QES_CANCEL:
 				delete this;

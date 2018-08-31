@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: gfx_layout.cpp 27367 2015-08-09 12:33:27Z rubidium $ */
 
 /*
  * This file is part of OpenTTD.

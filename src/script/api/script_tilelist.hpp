@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: script_tilelist.hpp 27287 2015-05-16 14:40:45Z alberth $ */
 
 /*
  * This file is part of OpenTTD.

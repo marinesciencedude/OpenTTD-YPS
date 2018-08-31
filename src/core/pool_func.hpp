@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: pool_func.hpp 27381 2015-08-10 20:24:13Z michi_cc $ */
 
 /*
  * This file is part of OpenTTD.

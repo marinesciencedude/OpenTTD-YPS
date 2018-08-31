@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: extmidi.h 27834 2017-03-29 17:36:46Z peter1138 $ */
 
 /*
  * This file is part of OpenTTD.
@@ -16,7 +16,7 @@
 
 class MusicDriver_ExtMidi : public MusicDriver {
 private:
-	char *command;
+	char **params;
 	char song[MAX_PATH];
 	pid_t pid;
 

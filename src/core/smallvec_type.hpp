@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: smallvec_type.hpp 27641 2016-09-04 12:50:22Z alberth $ */
 
 /*
  * This file is part of OpenTTD.
@@ -256,6 +256,8 @@ public:
 
 	/**
 	 * Get the number of items in the list.
+	 *
+	 * @return The number of items in the list.
 	 */
 	inline uint Length() const
 	{

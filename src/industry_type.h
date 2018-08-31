@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: industry_type.h 27279 2015-05-09 10:21:55Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_industrytiles.cpp 27928 2017-10-25 15:38:14Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -115,12 +115,6 @@ uint32 GetRelativePosition(TileIndex tile, TileIndex ind_tile)
 	assert(this->industry->index == INVALID_INDUSTRY || IsTileType(this->tile, MP_INDUSTRY));
 	if (this->industry->index == INVALID_INDUSTRY) return 0;
 	return GetIndustryTriggers(this->tile);
-}
-
-/* virtual */ void IndustryTileScopeResolver::SetTriggers(int triggers) const
-{
-	assert(this->industry != NULL && this->industry->index != INVALID_INDUSTRY && IsValidTile(this->tile) && IsTileType(this->tile, MP_INDUSTRY));
-	SetIndustryTriggers(this->tile, triggers);
 }
 
 /**
@@ -326,11 +320,16 @@ static void DoTriggerIndustryTile(TileIndex tile, IndustryTileTrigger trigger, I
 	if (itspec->grf_prop.spritegroup[0] == NULL) return;
 
 	IndustryTileResolverObject object(gfx, tile, ind, CBID_RANDOM_TRIGGER);
-	object.trigger = trigger;
+	object.waiting_triggers = GetIndustryTriggers(tile) | trigger;
+	SetIndustryTriggers(tile, object.waiting_triggers); // store now for var 5F
 
 	const SpriteGroup *group = object.Resolve();
 	if (group == NULL) return;
 
+	/* Store remaining triggers. */
+	SetIndustryTriggers(tile, object.GetRemainingTriggers());
+
+	/* Rerandomise tile bits */
 	byte new_random_bits = Random();
 	byte random_bits = GetIndustryRandomBits(tile);
 	random_bits &= ~object.reseed[VSG_SCOPE_SELF];

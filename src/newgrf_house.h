@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_house.h 27928 2017-10-25 15:38:14Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -33,7 +33,6 @@ struct HouseScopeResolver : public ScopeResolver {
 	/* virtual */ uint32 GetRandomBits() const;
 	/* virtual */ uint32 GetVariable(byte variable, uint32 parameter, bool *available) const;
 	/* virtual */ uint32 GetTriggers() const;
-	/* virtual */ void SetTriggers(int triggers) const;
 };
 
 /** Resolver object to be used for houses (feature 07 spritegroups). */

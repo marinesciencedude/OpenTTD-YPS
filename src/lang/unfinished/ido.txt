@@ -10,7 +10,7 @@
 ##grflangid 0x06
 
 
-# $Id$
+# $Id: ido.txt 27824 2017-03-24 18:45:45Z translators $
 
 # This file is part of OpenTTD.
 # OpenTTD is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, version 2.
@@ -776,7 +776,7 @@ STR_LAI_OBJECT_DESCRIPTION_COMPANY_HEADQUARTERS                 :Stabeyo di komp
 
 # About OpenTTD window
 STR_ABOUT_VERSION                                               :{BLACK}OpenTTD versiono {REV}
-STR_ABOUT_COPYRIGHT_OPENTTD                                     :{BLACK}OpenTTD {COPYRIGHT}2002-2016 La kruo OpenTTD
+STR_ABOUT_COPYRIGHT_OPENTTD                                     :{BLACK}OpenTTD {COPYRIGHT}2002-2017 La kruo OpenTTD
 
 # Save/load game/scenario
 STR_SAVELOAD_DETAIL_CAPTION                                     :{BLACK}Ludo Detali
@@ -921,6 +921,7 @@ STR_COMPANY_VIEW_VEHICLES_TITLE                                 :{GOLD}Vehili:
 ############ range for requires starts
 ############ range for requires ends
 
+
 ############ range for produces starts
 ############ range for produces ends
 
@@ -961,6 +962,7 @@ STR_GROUP_DEFAULT_TRAINS                                        :Negrupigita tre
 STR_GROUP_DEFAULT_ROAD_VEHICLES                                 :Negrupigita voy-vehili
 STR_GROUP_DEFAULT_SHIPS                                         :Negrupigita navi
 STR_GROUP_DEFAULT_AIRCRAFTS                                     :Negrupigita aeronavi
+
 
 
 

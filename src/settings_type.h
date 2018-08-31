@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: settings_type.h 27825 2017-03-24 18:55:16Z peter1138 $ */
 
 /*
  * This file is part of OpenTTD.
@@ -113,6 +113,7 @@ struct GUISettings {
 	uint8  scrollwheel_multiplier;           ///< how much 'wheel' per incoming event from the OS?
 	bool   timetable_arrival_departure;      ///< show arrivals and departures in vehicle timetables
 	bool   left_mouse_btn_scrolling;         ///< left mouse button scroll
+	bool   right_mouse_wnd_close;            ///< close window with right click
 	bool   pause_on_newgame;                 ///< whether to start new games paused or not
 	bool   enable_signal_gui;                ///< show the signal GUI when the signal button is pressed
 	Year   coloured_news_year;               ///< when does newspaper become coloured?
@@ -426,6 +427,12 @@ struct PathfinderSettings {
 	bool   reserve_paths;                    ///< always reserve paths regardless of signal type.
 	byte   wait_for_pbs_path;                ///< how long to wait for a path reservation.
 	byte   path_backoff_interval;            ///< ticks between checks for a free path.
+	
+	bool   yellow_pbs;                       ///< use yellow path signals with extended path reservation
+	uint16 yellow_speed;                     ///< maximum yellow signal speed
+	uint16 double_yellow_speed;              ///< maximum double yellow signal speed
+	bool   watch_next_signal;                ///< use color speed limit from next signal, if it's bigger than current
+	bool   slow_down_station;                ///< when entering station, make last pbs green instead of yellow
 
 	OPFSettings  opf;                        ///< pathfinder settings for the old pathfinder
 	NPFSettings  npf;                        ///< pathfinder settings for the new pathfinder
@@ -446,6 +453,8 @@ struct VehicleSettings {
 	uint8  max_train_length;                 ///< maximum length for trains
 	uint8  smoke_amount;                     ///< amount of smoke/sparks locomotives produce
 	uint8  train_acceleration_model;         ///< realistic acceleration for trains
+	uint8  yaam_multiplier;                  ///< acceleration speed for yaam
+	bool   yaam_hard;                        ///< passing red signals with yaam
 	uint8  roadveh_acceleration_model;       ///< realistic acceleration for road vehicles
 	uint8  train_slope_steepness;            ///< Steepness of hills for trains when using realistic acceleration
 	uint8  roadveh_slope_steepness;          ///< Steepness of hills for road vehicles when using realistic acceleration

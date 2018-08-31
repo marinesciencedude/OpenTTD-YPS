@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: genworld.h 27231 2015-04-11 18:45:18Z alberth $ */
 
 /*
  * This file is part of OpenTTD.

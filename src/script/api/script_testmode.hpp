@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: script_testmode.hpp 27543 2016-04-17 17:10:07Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

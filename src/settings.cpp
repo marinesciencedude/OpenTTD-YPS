@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: settings.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -178,7 +178,8 @@ static int ParseIntList(const char *p, int *items, int maxitems)
 				/* Do not accept multiple commas between numbers */
 				if (!comma) return -1;
 				comma = false;
-				/* FALL THROUGH */
+				FALLTHROUGH;
+
 			case ' ':
 				p++;
 				break;
@@ -1311,6 +1312,23 @@ static bool MaxVehiclesChanged(int32 p1)
 	return true;
 }
 
+static bool MaxYellowSpeedChanged(int32 p1)
+{
+	if (_settings_game.pf.double_yellow_speed < p1) {
+		ShowErrorMessage(STR_CONFIG_SETTING_YELLOW_DOUBLE_YELLOW_SMALLER, INVALID_STRING_ID, WL_ERROR);
+		return false;
+	}
+	return true;
+}
+
+static bool MaxDoubleYellowSpeedChanged(int32 p1)
+{
+	if (_settings_game.pf.yellow_speed > p1) {
+		ShowErrorMessage(STR_CONFIG_SETTING_YELLOW_DOUBLE_YELLOW_SMALLER, INVALID_STRING_ID, WL_ERROR);
+		return false;
+	}
+	return true;
+}
 
 #ifdef ENABLE_NETWORK
 
@@ -1688,7 +1706,7 @@ static void HandleSettingDescs(IniFile *ini, SettingDescProc *proc, SettingDescP
 static IniFile *IniLoadConfig()
 {
 	IniFile *ini = new IniFile(_list_group_names);
-	ini->LoadFromDisk(_config_file, BASE_DIR);
+	ini->LoadFromDisk(_config_file, NO_DIRECTORY);
 	return ini;
 }
 

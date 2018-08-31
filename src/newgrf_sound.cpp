@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_sound.cpp 27507 2016-02-08 21:05:57Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

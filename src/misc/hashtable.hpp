@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: hashtable.hpp 27363 2015-08-08 13:19:38Z alberth $ */
 
 /*
  * This file is part of OpenTTD.

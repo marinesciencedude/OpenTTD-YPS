@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_spritegroup.cpp 27928 2017-10-25 15:38:14Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -108,12 +108,6 @@ ScopeResolver::~ScopeResolver() {}
 {
 	return 0;
 }
-
-/**
- * Set the triggers. Base class implementation does nothing.
- * @param triggers Triggers to set.
- */
-/* virtual */ void ScopeResolver::SetTriggers(int triggers) const {}
 
 /**
  * Get a variable value. Default implementation has no available variables.
@@ -304,21 +298,15 @@ const SpriteGroup *DeterministicSpriteGroup::Resolve(ResolverObject &object) con
 const SpriteGroup *RandomizedSpriteGroup::Resolve(ResolverObject &object) const
 {
 	ScopeResolver *scope = object.GetScope(this->var_scope, this->count);
-	if (object.trigger != 0) {
+	if (object.callback == CBID_RANDOM_TRIGGER) {
 		/* Handle triggers */
-		/* Magic code that may or may not do the right things... */
-		byte waiting_triggers = scope->GetTriggers();
-		byte match = this->triggers & (waiting_triggers | object.trigger);
+		byte match = this->triggers & object.waiting_triggers;
 		bool res = (this->cmp_mode == RSG_CMP_ANY) ? (match != 0) : (match == this->triggers);
 
 		if (res) {
-			waiting_triggers &= ~match;
+			object.used_triggers |= match;
 			object.reseed[this->var_scope] |= (this->num_groups - 1) << this->lowest_randbit;
-		} else {
-			waiting_triggers |= object.trigger;
 		}
-
-		scope->SetTriggers(waiting_triggers);
 	}
 
 	uint32 mask  = (this->num_groups - 1) << this->lowest_randbit;

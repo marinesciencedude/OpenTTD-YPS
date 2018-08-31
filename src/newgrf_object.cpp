@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_object.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -232,7 +232,7 @@ static uint32 GetCountAndDistanceOfClosestInstance(byte local_id, uint32 grfid, 
 
 		case 0xFFFFFFFF: // current grf
 			grf_id = grfid;
-			/* FALL THROUGH */
+			FALLTHROUGH;
 
 		default: // use the grfid specified in register 100h
 			idx = _object_mngr.GetID(local_id, grf_id);

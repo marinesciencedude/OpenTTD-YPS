@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: strgen_base.cpp 27380 2015-08-10 20:21:29Z michi_cc $ */
 
 /*
  * This file is part of OpenTTD.

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: script_cargo.hpp 27316 2015-06-21 18:53:23Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

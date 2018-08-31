@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: texteff.cpp 27248 2015-04-25 11:58:19Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: object_gui.cpp 27438 2015-11-07 15:07:18Z frosch $ */
 
 /*
  * This file is part of OpenTTD.

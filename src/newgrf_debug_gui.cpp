@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: newgrf_debug_gui.cpp 27451 2015-11-20 10:04:28Z alberth $ */
 
 /*
  * This file is part of OpenTTD.

@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: vehicle.cpp 27904 2017-08-31 06:47:17Z adf88 $ */
 
 /*
  * This file is part of OpenTTD.
@@ -67,6 +67,47 @@ uint16 _returned_mail_refit_capacity; ///< Stores the mail capacity after a refi
 /** The pool with all our precious vehicles. */
 VehiclePool _vehicle_pool("Vehicle");
 INSTANTIATE_POOL_METHODS(Vehicle)
+
+
+/**
+ * Determine shared bounds of all sprites.
+ * @param [out] bounds Shared bounds.
+ */
+void VehicleSpriteSeq::GetBounds(Rect *bounds) const
+{
+	bounds->left = bounds->top = bounds->right = bounds->bottom = 0;
+	for (uint i = 0; i < this->count; ++i) {
+		const Sprite *spr = GetSprite(this->seq[i].sprite, ST_NORMAL);
+		if (i == 0) {
+			bounds->left = spr->x_offs;
+			bounds->top  = spr->y_offs;
+			bounds->right  = spr->width  + spr->x_offs - 1;
+			bounds->bottom = spr->height + spr->y_offs - 1;
+		} else {
+			if (spr->x_offs < bounds->left) bounds->left = spr->x_offs;
+			if (spr->y_offs < bounds->top)  bounds->top  = spr->y_offs;
+			int right  = spr->width  + spr->x_offs - 1;
+			int bottom = spr->height + spr->y_offs - 1;
+			if (right  > bounds->right)  bounds->right  = right;
+			if (bottom > bounds->bottom) bounds->bottom = bottom;
+		}
+	}
+}
+
+/**
+ * Draw the sprite sequence.
+ * @param x X position
+ * @param y Y position
+ * @param default_pal Vehicle palette
+ * @param force_pal Whether to ignore individual palettes, and draw everything with \a default_pal.
+ */
+void VehicleSpriteSeq::Draw(int x, int y, PaletteID default_pal, bool force_pal) const
+{
+	for (uint i = 0; i < this->count; ++i) {
+		PaletteID pal = force_pal || !this->seq[i].pal ? default_pal : this->seq[i].pal;
+		DrawSprite(this->seq[i].sprite, pal, x, y);
+	}
+}
 
 /**
  * Function to tell if a vehicle needs to be autorenewed
@@ -1008,7 +1049,6 @@ void CallVehicleTicks()
  */
 static void DoDrawVehicle(const Vehicle *v)
 {
-	SpriteID image = v->cur_image;
 	PaletteID pal = PAL_NONE;
 
 	if (v->vehstatus & VS_DEFPAL) pal = (v->vehstatus & VS_CRASHED) ? PALETTE_CRASH : GetVehiclePalette(v);
@@ -1023,8 +1063,14 @@ static void DoDrawVehicle(const Vehicle *v)
 		if (to != TO_INVALID && (IsTransparencySet(to) || IsInvisibilitySet(to))) return;
 	}
 
-	AddSortableSpriteToDraw(image, pal, v->x_pos + v->x_offs, v->y_pos + v->y_offs,
-		v->x_extent, v->y_extent, v->z_extent, v->z_pos, shadowed, v->x_bb_offs, v->y_bb_offs);
+	StartSpriteCombine();
+	for (uint i = 0; i < v->sprite_seq.count; ++i) {
+		PaletteID pal2 = v->sprite_seq.seq[i].pal;
+		if (!pal2 || (v->vehstatus & VS_CRASHED)) pal2 = pal;
+		AddSortableSpriteToDraw(v->sprite_seq.seq[i].sprite, pal2, v->x_pos + v->x_offs, v->y_pos + v->y_offs,
+			v->x_extent, v->y_extent, v->z_extent, v->z_pos, shadowed, v->x_bb_offs, v->y_bb_offs);
+	}
+	EndSpriteCombine();
 }
 
 /**
@@ -1194,8 +1240,6 @@ bool Vehicle::HandleBreakdown()
 			return false;
 
 		case 2:
-			this->breakdown_ctr = 1;
-
 			if (this->breakdowns_since_last_service != 255) {
 				this->breakdowns_since_last_service++;
 			}
@@ -1204,6 +1248,9 @@ bool Vehicle::HandleBreakdown()
 				/* Aircraft just need this flag, the rest is handled elsewhere */
 				this->vehstatus |= VS_AIRCRAFT_BROKEN;
 			} else {
+				if (this->type == VEH_TRAIN && _settings_game.vehicle.train_acceleration_model == AM_YAAM) {
+					if (cur_speed > 15u) return false;
+				}
 				this->cur_speed = 0;
 
 				if (!PlayVehicleSound(this, VSE_BREAKDOWN)) {
@@ -1218,12 +1265,13 @@ bool Vehicle::HandleBreakdown()
 					if (u != NULL) u->animation_state = this->breakdown_delay * 2;
 				}
 			}
+			this->breakdown_ctr = 1;
 
 			this->MarkDirty(); // Update graphics after speed is zeroed
 			SetWindowDirty(WC_VEHICLE_VIEW, this->index);
 			SetWindowDirty(WC_VEHICLE_DETAILS, this->index);
 
-			/* FALL THROUGH */
+			FALLTHROUGH;
 		case 1:
 			/* Aircraft breakdowns end only when arriving at the airport */
 			if (this->type == VEH_AIRCRAFT) return false;
@@ -1487,20 +1535,19 @@ void Vehicle::UpdatePosition()
  */
 void Vehicle::UpdateViewport(bool dirty)
 {
-	int img = this->cur_image;
+	Rect new_coord;
+	this->sprite_seq.GetBounds(&new_coord);
+
 	Point pt = RemapCoords(this->x_pos + this->x_offs, this->y_pos + this->y_offs, this->z_pos);
-	const Sprite *spr = GetSprite(img, ST_NORMAL);
+	new_coord.left   += pt.x;
+	new_coord.top    += pt.y;
+	new_coord.right  += pt.x + 2 * ZOOM_LVL_BASE;
+	new_coord.bottom += pt.y + 2 * ZOOM_LVL_BASE;
 
-	pt.x += spr->x_offs;
-	pt.y += spr->y_offs;
-
-	UpdateVehicleViewportHash(this, pt.x, pt.y);
+	UpdateVehicleViewportHash(this, new_coord.left, new_coord.top);
 
 	Rect old_coord = this->coord;
-	this->coord.left   = pt.x;
-	this->coord.top    = pt.y;
-	this->coord.right  = pt.x + spr->width + 2 * ZOOM_LVL_BASE;
-	this->coord.bottom = pt.y + spr->height + 2 * ZOOM_LVL_BASE;
+	this->coord = new_coord;
 
 	if (dirty) {
 		if (old_coord.left == INVALID_COORD) {
@@ -2115,6 +2162,7 @@ void Vehicle::LeaveStation()
 	st->loading_vehicles.remove(this);
 
 	HideFillingPercent(&this->fill_percent_te_id);
+	trip_occupancy = CalcPercentVehicleFilled(this, NULL);
 
 	if (this->type == VEH_TRAIN && !(this->vehstatus & VS_CRASHED)) {
 		/* Trigger station animation (trains only) */
@@ -2631,7 +2679,7 @@ void Vehicle::RemoveFromShared()
 	if (this->orders.list->GetNumVehicles() == 1) {
 		/* When there is only one vehicle, remove the shared order list window. */
 		DeleteWindowById(GetWindowClassForVehicleType(this->type), vli.Pack());
-		InvalidateVehicleOrder(this->FirstShared(), 0);
+		InvalidateVehicleOrder(this->FirstShared(), VIWD_MODIFY_ORDERS);
 	} else if (were_first) {
 		/* If we were the first one, update to the new first one.
 		 * Note: FirstShared() is already the new first */

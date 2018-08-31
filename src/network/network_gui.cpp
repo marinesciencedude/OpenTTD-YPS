@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: network_gui.cpp 27893 2017-08-13 18:38:42Z frosch $ */
 
 /*
  * This file is part of OpenTTD.
@@ -1187,17 +1187,17 @@ struct NetworkStartServerWindow : public Window {
 
 			case WID_NSS_LOAD_GAME:
 				_is_network_server = true;
-				ShowSaveLoadDialog(SLD_LOAD_GAME);
+				ShowSaveLoadDialog(FT_SAVEGAME, SLO_LOAD);
 				break;
 
 			case WID_NSS_PLAY_SCENARIO:
 				_is_network_server = true;
-				ShowSaveLoadDialog(SLD_LOAD_SCENARIO);
+				ShowSaveLoadDialog(FT_SCENARIO, SLO_LOAD);
 				break;
 
 			case WID_NSS_PLAY_HEIGHTMAP:
 				_is_network_server = true;
-				ShowSaveLoadDialog(SLD_LOAD_HEIGHTMAP);
+				ShowSaveLoadDialog(FT_HEIGHTMAP,SLO_LOAD);
 				break;
 		}
 	}
@@ -2053,7 +2053,8 @@ struct NetworkJoinStatusWindow : Window {
 					progress = 15; // We don't have the final size yet; the server is still compressing!
 					break;
 				}
-				/* FALL THROUGH */
+				FALLTHROUGH;
+
 			default: // Waiting is 15%, so the resting receivement of map is maximum 70%
 				progress = 15 + _network_join_bytes * (100 - 15) / _network_join_bytes_total;
 		}
@@ -2182,7 +2183,7 @@ struct NetworkCompanyPasswordWindow : public Window {
 		switch (widget) {
 			case WID_NCP_OK:
 				this->OnOk();
-				/* FALL THROUGH */
+				FALLTHROUGH;
 
 			case WID_NCP_CANCEL:
 				delete this;
